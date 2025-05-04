@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useVectorStore } from '@/lib/store';
 import { Check, Download, Clipboard, Code2, FileCode } from 'lucide-react';
 
@@ -327,77 +328,67 @@ export function VectorFramer() {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex flex-col w-full max-w-[90vw] md:min-w-[960px] md:max-w-[1600px] h-[90vh] bg-black text-gray-300 border border-gray-800 p-0">
-        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-800">
+      <DialogContent className="flex flex-col w-full max-w-[90vw] md:min-w-[960px] md:max-w-[1600px] h-[90vh] bg-background text-foreground border border-input p-0 font-mono">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-input bg-card">
           <DialogHeader className="p-0 m-0">
-            <DialogTitle className="text-sm font-mono uppercase text-gray-300">Exportar Código</DialogTitle>
+            <DialogTitle className="font-semibold text-xs font-mono uppercase">Exportar Vector</DialogTitle>
           </DialogHeader>
           {/* El botón de cerrar está en el DialogContent por defecto */}
         </div>
 
-        <div className="flex justify-center my-3 gap-2">
-          <button
-            className={`px-4 py-1 text-xs rounded-full font-mono border transition-colors ${
-              activeTab === 'svg' 
-                ? 'bg-gray-800 border-gray-600 text-white' 
-                : 'bg-gray-900 text-gray-400 border-gray-800 hover:bg-gray-800 hover:text-gray-300'
-            }`}
-            onClick={() => setActiveTab('svg')}
-            aria-label="Ver código SVG"
-          >
-            <FileCode className="w-4 h-4 inline-block mr-1" /> SVG
-          </button>
-          <button
-            className={`px-4 py-1 text-xs rounded-full font-mono border transition-colors ${
-              activeTab === 'js' 
-                ? 'bg-gray-800 border-gray-600 text-white' 
-                : 'bg-gray-900 text-gray-400 border-gray-800 hover:bg-gray-800 hover:text-gray-300'
-            }`}
-            onClick={() => setActiveTab('js')}
-            aria-label="Ver código JavaScript"
-          >
-            <Code2 className="w-4 h-4 inline-block mr-1" /> JS
-          </button>
-          <button
-            className={`px-4 py-1 text-xs rounded-full font-mono border transition-colors ${
-              activeTab === 'framer' 
-                ? 'bg-gray-800 border-gray-600 text-white' 
-                : 'bg-gray-900 text-gray-400 border-gray-800 hover:bg-gray-800 hover:text-gray-300'
-            }`}
-            onClick={() => setActiveTab('framer')}
-            aria-label="Ver código Framer React"
-          >
-            <Code2 className="w-4 h-4 inline-block mr-1" /> Framer
-          </button>
+        <div className="border-b border-input p-3 flex items-center justify-between bg-card">
+          <div className="text-xs text-muted-foreground font-mono uppercase">Código</div>
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'svg' | 'js' | 'framer')}>
+            <TabsList className="rounded-none bg-muted border border-input">
+              <TabsTrigger 
+                value="svg" 
+                className="text-xs font-mono rounded-none data-[state=active]:bg-card data-[state=active]:text-card-foreground flex items-center justify-center gap-1"
+              >
+                <FileCode className="w-3 h-3" /> SVG
+              </TabsTrigger>
+              <TabsTrigger 
+                value="js" 
+                className="text-xs font-mono rounded-none data-[state=active]:bg-card data-[state=active]:text-card-foreground flex items-center justify-center gap-1"
+              >
+                <Code2 className="w-3 h-3" /> JavaScript
+              </TabsTrigger>
+              <TabsTrigger 
+                value="framer" 
+                className="text-xs font-mono rounded-none data-[state=active]:bg-card data-[state=active]:text-card-foreground flex items-center justify-center gap-1"
+              >
+                <Code2 className="w-3 h-3" /> Framer
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
-        <div className="flex-1 flex flex-col overflow-hidden px-6 pb-6 pt-2">
+        <div className="flex-1 flex flex-col overflow-hidden px-4 pb-4 pt-2 bg-background">
           {/* Preview inicial */}
-          <div className="bg-gray-900 rounded border border-gray-800 mb-2 p-3 text-xs text-gray-400 font-mono relative">
-            <div className="absolute top-2 right-2 bg-gray-800 text-[10px] px-2 py-0.5 rounded-full text-gray-400 uppercase">
+          <div className="bg-muted rounded-none border border-input mb-2 p-3 text-xs text-muted-foreground font-mono relative">
+            <div className="absolute top-2 right-2 bg-secondary text-secondary-foreground text-[10px] px-2 py-0.5 rounded-full uppercase font-mono">
               {activeTab === 'svg' ? 'svg' : activeTab === 'js' ? 'javascript' : 'framer'}
             </div>
-            <pre className="overflow-hidden max-h-[100px]">
+            <pre className="overflow-hidden max-h-[100px] font-mono">
               {previewLines}
               {(activeTab === 'svg' ? svgCode : activeTab === 'js' ? jsCode : framerComponentCode).split('\n').length > 5 && (
-                <div className="h-8 bg-gradient-to-b from-transparent to-gray-900 absolute bottom-0 left-0 right-0"></div>
+                <div className="h-8 bg-gradient-to-b from-transparent to-muted absolute bottom-0 left-0 right-0"></div>
               )}
             </pre>
           </div>
 
           {/* Scrollable completo */}
-          <div className="flex-1 overflow-hidden flex flex-col bg-gray-950 rounded-lg border border-gray-800">
-            <div className="p-2 bg-gray-900 flex items-center justify-between border-b border-gray-800">
+          <div className="flex-1 overflow-hidden flex flex-col bg-background rounded-none border border-input">
+            <div className="p-2 bg-muted flex items-center justify-between border-b border-input">
               <div className="flex space-x-1 items-center">
-                <div className="w-3 h-3 rounded-full bg-gray-600 border border-gray-500"></div>
-                <div className="w-3 h-3 rounded-full bg-gray-500 border border-gray-400"></div>
-                <div className="w-3 h-3 rounded-full bg-gray-400 border border-gray-300"></div>
-                <span className="text-xs text-gray-400 font-mono ml-2">
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <span className="text-xs text-muted-foreground font-mono ml-2">
                   {activeTab === 'svg' ? 'vector.svg' : activeTab === 'js' ? 'vector-animation.js' : 'VectorFramer.tsx'}
                 </span>
               </div>
 
-              <span className="text-xs text-gray-500 font-mono">
+              <span className="text-xs text-muted-foreground font-mono">
                 {activeTab === 'svg' 
                   ? `${codeStats.svg.lines} líneas, ${codeStats.svg.paths} elementos` 
                   : activeTab === 'js'
@@ -406,21 +397,22 @@ export function VectorFramer() {
               </span>
             </div>
             <div className="flex-1 overflow-auto">
-              <pre className="p-4 text-sm font-mono text-gray-200 whitespace-pre-wrap leading-relaxed">
+              <pre className="p-4 text-sm font-mono text-muted-foreground whitespace-pre-wrap leading-relaxed bg-background">
                 {activeTab === 'svg' ? svgCode : activeTab === 'js' ? jsCode : framerComponentCode}
               </pre>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-between p-3 border-t border-gray-800 bg-gray-950">
+        <div className="flex items-center justify-between p-3 border-t border-input bg-muted">
           <div className="flex gap-2">
             <Button
               onClick={() => handleCopy(
                 activeTab === 'svg' ? svgCode : activeTab === 'js' ? jsCode : framerComponentCode, 
                 activeTab.toUpperCase()
               )}
-              className="font-mono text-xs gap-1 bg-gray-800 hover:bg-gray-700"
+              variant="secondary"
+              className="font-mono text-xs gap-1"
               aria-label="Copiar código"
             >
               {copySuccess ? (
@@ -434,7 +426,8 @@ export function VectorFramer() {
                 activeTab === 'svg' ? svgCode : activeTab === 'js' ? jsCode : framerComponentCode, 
                 activeTab === 'svg' ? 'vector.svg' : activeTab === 'js' ? 'vector-animation.js' : 'VectorFramer.tsx'
               )}
-              className="font-mono text-xs gap-1 bg-gray-900 hover:bg-gray-800 border border-gray-700"
+              variant="outline"
+              className="font-mono text-xs gap-1"
               aria-label="Descargar código"
             >
               <Download className="h-3 w-3" /> Descargar

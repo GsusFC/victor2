@@ -1,0 +1,97 @@
+/* Estilos para los controles de animación */
+
+/* Estilos generales */
+.animation-controls {
+  font-family: var(--font-mono);
+}
+
+/* Tarjetas */
+.animation-controls .animation-card {
+  border-radius: 0;
+  box-shadow: none;
+  border: 1px solid var(--input);
+}
+
+/* Títulos de tarjetas */
+.animation-controls .card-title {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+/* Select */
+.animation-controls select {
+  width: 100%;
+  background-color: var(--muted);
+  color: var(--foreground);
+  font-size: 0.75rem;
+  padding: 0.5rem;
+  border: 1px solid var(--input);
+  border-radius: 0;
+  font-family: var(--font-mono);
+}
+
+.animation-controls select:focus {
+  outline: none;
+  box-shadow: 0 0 0 1px var(--ring);
+}
+
+/* Labels */
+.animation-controls label {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+}
+
+/* Valores numéricos */
+.animation-controls .value-display {
+  font-size: 0.75rem;
+  width: 2rem;
+  text-align: right;
+  font-family: var(--font-mono);
+}
+
+/* Sliders (input range) */
+.animation-controls input[type="range"] {
+  width: 100%;
+  height: 0.375rem;
+  background-color: var(--muted);
+  border-radius: 0;
+  appearance: none;
+  cursor: pointer;
+}
+
+.animation-controls input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 0.75rem;
+  height: 0.75rem;
+  background: var(--foreground);
+  border: 1px solid var(--input);
+  border-radius: 0;
+}
+
+.animation-controls input[type="range"]::-moz-range-thumb {
+  width: 0.75rem;
+  height: 0.75rem;
+  background: var(--foreground);
+  border: 1px solid var(--input);
+  border-radius: 0;
+}
+
+/* Inputs numéricos */
+.animation-controls input[type="number"] {
+  width: 100%;
+  background-color: var(--muted);
+  color: var(--foreground);
+  font-size: 0.75rem;
+  padding: 0.5rem;
+  border: 1px solid var(--input);
+  border-radius: 0;
+  font-family: var(--font-mono);
+}
+
+.animation-controls input[type="number"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 1px var(--ring);
+}

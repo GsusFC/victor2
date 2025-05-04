@@ -5,6 +5,7 @@ import { LineCap } from '@/lib/types';
 import { isValidVectorShape } from '@/components/vector/core/types';
 import { exportDialogState } from '@/hooks/vector/useExportDialog';
 import { RotationOriginControl } from '@/components/vector/ui/RotationOriginControl';
+import '@/styles/vector-properties.css';
 
 export function VectorProperties() {  
   const settings = useVectorStore((state) => state.settings);
@@ -56,7 +57,7 @@ export function VectorProperties() {
   };
   
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 vector-properties">
       <Card className="border-input">
         <CardHeader className="p-4 pb-2">
           <CardTitle className="text-xs font-mono uppercase">Grid de Vectores</CardTitle>

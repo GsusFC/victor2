@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useVectorStore } from '@/lib/store';
 import { isValidAnimationType } from "../vector/core/types";
+import "@/styles/animation-controls.css";
 
 export function AnimationControls() {
   const settings = useVectorStore((state) => state.settings);
@@ -28,16 +29,16 @@ export function AnimationControls() {
     updateSetting('easingFactor', value);
   };
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 font-mono animation-controls">
       <Card className="border-input">
         <CardHeader className="p-4 pb-2">
-          <CardTitle className="text-xs">TIPO DE ANIMACIÓN</CardTitle>
+          <CardTitle className="text-xs font-mono font-medium tracking-wide">TIPO DE ANIMACIÓN</CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-2">
           <select 
             value={settings.currentAnimationType}
             onChange={handleAnimationTypeChange}
-            className="w-full bg-muted text-foreground text-xs p-2 border border-input focus:outline-none"
+            className="w-full bg-muted text-foreground text-xs p-2 border border-input rounded-none focus:outline-none focus:ring-1 focus:ring-ring font-mono"
           >
             {[
               { value: 'smoothWaves', label: 'Ondas Suaves' },
@@ -72,7 +73,7 @@ export function AnimationControls() {
                   step="0.1" 
                   value={settings.animationSpeedFactor}
                   onChange={handleAnimationSpeedChange}
-                  className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                  className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
                 />
                 <span className="text-xs w-8 text-right">{settings.animationSpeedFactor.toFixed(1)}</span>
               </div>
@@ -88,7 +89,7 @@ export function AnimationControls() {
                   step="0.01" 
                   value={settings.easingFactor}
                   onChange={handleEasingFactorChange}
-                  className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                  className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
                 />
                 <span className="text-xs w-8 text-right">{settings.easingFactor.toFixed(2)}</span>
               </div>
@@ -116,7 +117,7 @@ export function AnimationControls() {
                       step="0.1" 
                       value={settings.vortexStrength}
                       onChange={(e) => updateSetting('vortexStrength', parseFloat(e.target.value))}
-                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                      className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
                     />
                     <span className="text-xs w-8 text-right">{settings.vortexStrength.toFixed(1)}</span>
                   </div>
@@ -131,7 +132,7 @@ export function AnimationControls() {
                       step="1" 
                       value={settings.vortexCenterX}
                       onChange={(e) => updateSetting('vortexCenterX', parseInt(e.target.value))}
-                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                      className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
                     />
                     <span className="text-xs w-8 text-right">{settings.vortexCenterX}</span>
                   </div>
@@ -146,7 +147,7 @@ export function AnimationControls() {
                       step="1" 
                       value={settings.vortexCenterY}
                       onChange={(e) => updateSetting('vortexCenterY', parseInt(e.target.value))}
-                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                      className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
                     />
                     <span className="text-xs w-8 text-right">{settings.vortexCenterY}</span>
                   </div>
@@ -167,7 +168,7 @@ export function AnimationControls() {
                       step="1" 
                       value={settings.geometricPatternSize}
                       onChange={(e) => updateSetting('geometricPatternSize', parseFloat(e.target.value))}
-                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                      className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
                     />
                     <span className="text-xs w-8 text-right">{settings.geometricPatternSize}</span>
                   </div>
@@ -182,7 +183,7 @@ export function AnimationControls() {
                       step="1" 
                       value={settings.geometricPatternComplexity}
                       onChange={(e) => updateSetting('geometricPatternComplexity', parseInt(e.target.value))}
-                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                      className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
                     />
                     <span className="text-xs w-8 text-right">{settings.geometricPatternComplexity}</span>
                   </div>
@@ -197,7 +198,7 @@ export function AnimationControls() {
                       step="0.1" 
                       value={settings.geometricPatternRotationSpeed}
                       onChange={(e) => updateSetting('geometricPatternRotationSpeed', parseFloat(e.target.value))}
-                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                      className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
                     />
                     <span className="text-xs w-8 text-right">{settings.geometricPatternRotationSpeed.toFixed(1)}</span>
                   </div>
@@ -218,7 +219,7 @@ export function AnimationControls() {
                       step="0.1" 
                       value={settings.followPathSpeed}
                       onChange={(e) => updateSetting('followPathSpeed', parseFloat(e.target.value))}
-                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                      className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
                     />
                     <span className="text-xs w-8 text-right">{settings.followPathSpeed.toFixed(1)}</span>
                   </div>
@@ -233,7 +234,7 @@ export function AnimationControls() {
                       step="1" 
                       value={settings.followPathComplexity}
                       onChange={(e) => updateSetting('followPathComplexity', parseInt(e.target.value))}
-                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                      className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
                     />
                     <span className="text-xs w-8 text-right">{settings.followPathComplexity}</span>
                   </div>
@@ -248,7 +249,7 @@ export function AnimationControls() {
                       step="0.1" 
                       value={settings.followPathVariation}
                       onChange={(e) => updateSetting('followPathVariation', parseFloat(e.target.value))}
-                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                      className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
                     />
                     <span className="text-xs w-8 text-right">{settings.followPathVariation.toFixed(1)}</span>
                   </div>
@@ -269,7 +270,7 @@ export function AnimationControls() {
                       step="1" 
                       value={settings.lissajousParamA}
                       onChange={(e) => updateSetting('lissajousParamA', parseInt(e.target.value))}
-                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                      className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
                     />
                     <span className="text-xs w-8 text-right">{settings.lissajousParamA}</span>
                   </div>
@@ -284,7 +285,7 @@ export function AnimationControls() {
                       step="1" 
                       value={settings.lissajousParamB}
                       onChange={(e) => updateSetting('lissajousParamB', parseInt(e.target.value))}
-                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                      className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
                     />
                     <span className="text-xs w-8 text-right">{settings.lissajousParamB}</span>
                   </div>
@@ -299,7 +300,7 @@ export function AnimationControls() {
                       step="0.0001" 
                       value={settings.lissajousFrequency}
                       onChange={(e) => updateSetting('lissajousFrequency', parseFloat(e.target.value))}
-                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                      className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
                     />
                     <span className="text-xs w-8 text-right">{settings.lissajousFrequency.toFixed(4)}</span>
                   </div>
@@ -318,7 +319,7 @@ export function AnimationControls() {
                         const radians = degrees * Math.PI / 180;
                         updateSetting('lissajousDelta', radians);
                       }}
-                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                      className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
                     />
                     <span className="text-xs w-8 text-right">{Math.round((settings.lissajousDelta * 180 / Math.PI))}°</span>
                   </div>
@@ -337,7 +338,7 @@ export function AnimationControls() {
                     max="50" 
                     value={settings.mouseAttractionRadius}
                     onChange={(e) => updateSetting('mouseAttractionRadius', parseInt(e.target.value))}
-                    className="w-full bg-muted text-foreground text-xs p-2 border border-input focus:outline-none" 
+                    className="w-full bg-muted text-foreground text-xs p-2 border border-input rounded-none focus:outline-none focus:ring-1 focus:ring-muted-foreground font-mono" 
                   />
                   <span className="text-xs">%</span>
                 </div>

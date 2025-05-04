@@ -115,7 +115,6 @@ const NewVectorCanvas: React.FC = () => {
           
           // Recalcular espacio disponible considerando margen de seguridad
           const availableWidth = dimensions.width - (securityMargin * 2);
-          const availableHeight = dimensions.height - (securityMargin * 2);
           
           // Calcular factor para mantener densidad visual adecuada y evitar cortes
           const spacingFactor = availableWidth / (configSpacing * cols);
@@ -128,7 +127,6 @@ const NewVectorCanvas: React.FC = () => {
           
           // Recalcular espacio disponible considerando margen de seguridad
           const availableWidth = dimensions.width - (securityMargin * 2);
-          const availableHeight = dimensions.height - (securityMargin * 2);
           
           // Calcular factor para mantener densidad visual adecuada y evitar cortes
           const spacingFactor = availableWidth / (configSpacing * cols);
@@ -450,10 +448,15 @@ const NewVectorCanvas: React.FC = () => {
     <div className={getContainerClasses()} ref={containerRef}>
       <svg 
         ref={svgRef}
-        viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
+        viewBox={`0 0 ${dimensions.width || 1067} ${dimensions.height || 600}`}
         preserveAspectRatio="xMidYMid meet"
-        className="w-full h-full bg-black"
+        className="w-full h-full bg-background"
       >
+        <defs>
+          <style>
+            {`.dark svg line, .dark svg path, .dark svg polygon, .dark svg circle { stroke: #FFFFFF !important; fill: #FFFFFF !important; }`}
+          </style>
+        </defs>
         <g>
           {vectorItems.map(item => {
             const { currentAngle, baseX, baseY, lengthFactor = 1.0 } = item;

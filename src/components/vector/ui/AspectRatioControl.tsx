@@ -44,8 +44,8 @@ export function AspectRatioControl() {
   };
 
   return (
-    <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 flex items-center justify-center space-x-2 bg-black/70 p-2 rounded-lg shadow-lg z-50">
-      <span className="text-xs text-white">Relación de aspecto:</span>
+    <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 flex items-center justify-center space-x-2 bg-background/90 dark:bg-background/80 p-2 rounded-none shadow-none z-50 border border-border dark:border-muted">
+      <span className="text-xs text-muted-foreground dark:text-muted-foreground font-mono">Formato:</span>
       <div className="flex space-x-1">
         {aspectRatioOptions.map(option => (
           <button
@@ -54,10 +54,10 @@ export function AspectRatioControl() {
               console.log(`[AspectRatioControl] Botón ${option.value} clickeado!`); // Log directo
               handleAspectRatioChange(option.value);
             }}
-            className={`pointer-events-auto px-2 py-1 text-xs rounded transition-colors flex items-center ${
+            className={`pointer-events-auto px-2 py-1 text-xs rounded-none font-mono transition-colors duration-200 flex items-center ${
               aspectRatio === option.value 
-                ? 'bg-primary text-white border border-primary'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                ? 'bg-muted dark:bg-muted text-foreground dark:text-foreground border border-input dark:border-input'
+                : 'bg-background dark:bg-background text-muted-foreground dark:text-muted-foreground border border-transparent hover:border-border dark:hover:border-muted'
             }`}
             title={option.title}
           >
