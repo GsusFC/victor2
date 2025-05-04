@@ -3,7 +3,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useVectorStore } from '@/lib/store';
 import Victor from 'victor';
-import type { VectorSettings, AnimationType } from '@/components/vector/core/types';
+import type { VectorSettings } from '@/components/vector/core/types';
 import type { ExtendedVectorItem } from '@/components/vector/core/vectorTypes';
 import { AspectRatioControl } from './ui/AspectRatioControl';
 import { useContainerDimensions } from '@/hooks/vector/useContainerDimensions';

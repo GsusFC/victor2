@@ -4,23 +4,28 @@ import { useVectorStore } from '@/lib/store';
 import { LineCap } from '@/lib/types';
 import { isValidVectorShape } from '@/components/vector/core/types';
 import { exportDialogState } from '@/hooks/vector/useExportDialog';
+import { RotationOriginControl } from '@/components/vector/ui/RotationOriginControl';
 
 export function VectorProperties() {  
   const settings = useVectorStore((state) => state.settings);
-  const setSettings = useVectorStore((state) => state.setSettings);
+  const {
+    updateSetting,
+    setVectorShape,
+    setLineCap
+  } = useVectorStore((state) => state.actions);
   
   // Manejadores para grid y dimensiones
   const handleGridRowsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
     if (!isNaN(value) && value >= 3 && value <= 50) {
-      setSettings({ gridRows: value });
+      updateSetting('gridRows', value);
     }
   };
   
   const handleSpacingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
     if (!isNaN(value) && value >= 10 && value <= 100) {
-      setSettings({ vectorSpacing: value });
+      updateSetting('vectorSpacing', value);
     }
   };
   
@@ -28,25 +33,25 @@ export function VectorProperties() {
   const handleVectorShapeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     if (isValidVectorShape(value)) {
-      setSettings({ vectorShape: value });
+      setVectorShape(value);
     } else {
       console.warn(`Invalid vector shape value received: ${value}`);
-      setSettings({ vectorShape: 'line' }); 
+      setVectorShape('line'); 
     }
   };
   
   const handleVectorLineCapChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSettings({ strokeLinecap: e.target.value as LineCap });
+    setLineCap(e.target.value as LineCap);
   };
   
   const handleVectorColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSettings({ vectorColor: e.target.value });
+    updateSetting('vectorColor', e.target.value);
   };
   
   const handleVectorLengthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
     if (!isNaN(value) && value >= 1) {
-      setSettings({ vectorLength: value });
+      updateSetting('vectorLength', value);
     }
   };
   
@@ -243,7 +248,8 @@ export function VectorProperties() {
                   value={settings.vectorStrokeWidth || 1}
                   onChange={(e) => {
                     const value = parseFloat(e.target.value);
-                    setSettings({ vectorStrokeWidth: value, vectorWidth: value });
+                    updateSetting('vectorStrokeWidth', value);
+                    updateSetting('vectorWidth', value);
                     console.log('Grosor actualizado a:', value);
                   }}
                   className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
@@ -256,7 +262,8 @@ export function VectorProperties() {
                   value={settings.vectorStrokeWidth || 1}
                   onChange={(e) => {
                     const value = parseFloat(e.target.value) || 1;
-                    setSettings({ vectorStrokeWidth: value, vectorWidth: value });
+                    updateSetting('vectorStrokeWidth', value);
+                    updateSetting('vectorWidth', value);
                     console.log('Grosor actualizado a:', value);
                   }}
                   className="w-16 bg-muted text-foreground text-xs p-1 pl-2 pr-1 border border-input focus:outline-none font-mono appearance-auto"
@@ -265,6 +272,8 @@ export function VectorProperties() {
               <p className="text-xs text-muted-foreground mt-1 font-mono opacity-70">Grosor del trazo de cada vector</p>
             </div>
             
+            <RotationOriginControl />
+
             {/* Eliminado selector isStrokeVariabilityActive que no existe en VectorSettings */}
           </div>
         </CardContent>

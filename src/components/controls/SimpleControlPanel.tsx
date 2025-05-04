@@ -4,6 +4,7 @@ import { LineCap } from '@/lib/types';
 import { isValidAnimationType } from '../vector/core/types';
 import { VectorSettings, isValidVectorShape } from '@/components/vector/core/types'; 
 import { PresetButtons } from './PresetButtons'; // Importar el nuevo componente
+import { RotationOriginControl } from '../vector/ui/RotationOriginControl'; // <-- Importar el nuevo control
 
 interface SimpleControlPanelProps {
   onExportClick: () => void;
@@ -252,6 +253,10 @@ export function SimpleControlPanel({ onExportClick }: SimpleControlPanelProps) {
               <option value="square">Cuadrado</option>
             </select>
           </div>
+          
+          {/* Añadir el nuevo control de origen de rotación aquí */}
+          <RotationOriginControl />
+
         </div>
       </div>
       

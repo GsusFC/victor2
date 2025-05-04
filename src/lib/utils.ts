@@ -11,7 +11,7 @@ export function cn(...inputs: ClassValue[]) {
  * @param wait Tiempo mínimo entre ejecuciones en ms
  * @returns Función throttled
  */
-export function throttle<T extends (...args: any[]) => any>(fn: T, wait: number): (...args: Parameters<T>) => void {
+export function throttle<T extends (...args: unknown[]) => ReturnType<T>>(fn: T, wait: number): (...args: Parameters<T>) => void {
   let lastCall = 0;
   let timeout: NodeJS.Timeout | null = null;
   let lastArgs: Parameters<T> | null = null;
@@ -58,8 +58,8 @@ export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, 
  * @param value Valor a comprobar
  * @returns Boolean indicando si es una promesa
  */
-export const isPromise = <T>(value: any): value is Promise<T> => {
-  return Boolean(value && typeof value.then === 'function');
+export const isPromise = <T>(value: unknown): value is Promise<T> => {
+  return Boolean(value) && typeof value === 'object' && value !== null && 'then' in value && typeof (value as {then: unknown}).then === 'function';
 };
 
 /**

@@ -1,36 +1,26 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { 
-  PartialVectorSettings, 
+import { produce } from 'immer'; // Importar produce
+import type { 
   VectorSettings, 
   BaseVectorSettings, 
-  AnimationVectorSettings, 
   AnimationType, 
   VectorShape,
   LineCap,
-  AspectRatio
+  AspectRatio,
+  RotationOrigin,
+  PinwheelCenter,
+  OceanEddy
 } from '@/components/vector/core/types';
-import { ExtendedVectorItem } from '@/components/vector/core/vectorTypes';
-import { produce } from 'immer'; // Necesario para merge inmutable
+import type { ExtendedVectorItem } from '@/components/vector/core/vectorTypes';
 
 // Tipos de datos para el store
 export interface VectorStore extends VectorStoreState {
-  // Acciones
-  setSettings: (newSettings: PartialVectorSettings & { currentAnimationType?: never } | { currentAnimationType: AnimationType; animationType: AnimationType }) => void;
-  setSvgLines: (lines: ExtendedVectorItem[]) => void;
-  updateVectorAngle: (id: string, angle: number) => void;
-  setAnimationFrameId: (id: number | null) => void;
-  setIsLoading: (isLoading: boolean) => void;
-  setError: (error: string | null) => void;
-  setCalculatedValues: (gridCols: number, width: number, height: number) => void;
-  resetSettings: () => void;
-  resetStore: () => void;
-  setPinwheelCenters: (centers: PinwheelCenter[]) => void;
-  setLastPulseTime: (time: number) => void;
+  actions: VectorStoreActions; // Añadir la propiedad actions aquí
 }
 
 // Valores por defecto para animaciones
-export const defaultAnimationSettings: Omit<AnimationVectorSettings, keyof BaseVectorSettings> = {
+export const defaultAnimationSettings: Omit<BaseVectorSettings, keyof BaseVectorSettings> = {
   animationType: 'smoothWaves' as AnimationType,
   currentAnimationType: 'smoothWaves' as AnimationType,
   seaWaveFrequency: 0.02,
@@ -86,121 +76,218 @@ export const defaultBaseSettings: BaseVectorSettings = {
   vortexInwardFactor: 0.01,
   jitterIntensity: 0.1,
   pulseInterval: 1000, // Valor por defecto para pulseInterval
+  rotationOrigin: 'start' as RotationOrigin, // Nuevo valor por defecto
+  dynamicLengthEnabled: false,
+  dynamicLengthIntensity: 0.5,
 };
 
-// Configuración completa por defecto
+// Configuración completa por defecto - SOLO SETTINGS
 export const defaultSettings: VectorSettings = {
-  ...defaultBaseSettings,
-  ...defaultAnimationSettings,
-  isPaused: false, // Estado inicial de pausa
+  // --- Propiedades de BaseVectorSettings --- 
+  vectorLength: 30,
+  vectorWidth: 2, 
+  vectorSpacing: 20,
+  gridRows: 15,
+  vectorColor: '#FFFFFF',
+  vectorShape: 'line',
+  strokeLinecap: 'round', 
+  animationSpeed: 1, 
+  backgroundColor: '#000000', 
+  mouseAttraction: true, 
+  aspectRatio: '16:9',
+  animationSpeedFactor: 1, 
+  easingFactor: 0.1,
+  useAdvancedControls: false, 
+  vectorLineCap: 'round', // Mantener consistencia con strokeLinecap
+  vectorStrokeWidth: 2, // Mantener consistencia con vectorWidth
+  isStrokeVariabilityActive: false, 
+  pinwheelCount: 3, 
+  vortexInwardFactor: 0.5, 
+  jitterIntensity: 0.1,
+  pulseInterval: 1000,
+  rotationOrigin: 'start',
+  dynamicLengthEnabled: false,
+  dynamicLengthIntensity: 0.5,
+  
+  // --- Propiedades de AnimationVectorSettings (excluyendo las ya en Base) --- 
+  animationType: 'smoothWaves',
+  currentAnimationType: 'smoothWaves',
+  seaWaveFrequency: 0.02,
+  seaWaveAmplitude: 20,
+  perlinNoiseScale: 0.01, // Corregido de noiseScale
+  perlinNoiseSpeed: 0.005, // Corregido de noiseSpeed
+  mouseAttractionRadius: 100, // Corregido de mouseRadius
+  mouseAttractionStrength: 1, // Corregido de mouseStrength
+  pulseDuration: 500, 
+  geometricPatternSize: 50, 
+  geometricPatternComplexity: 3, 
+  geometricPatternRotationSpeed: 0.01, 
+  vortexStrength: 1,
+  vortexCenterX: 50, 
+  vortexCenterY: 50, 
+  followPathComplexity: 5, 
+  followPathSpeed: 1, 
+  followPathVariation: 0.1, 
+  lissajousParamA: 1, 
+  lissajousParamB: 2, 
+  lissajousFrequency: 0.01, 
+  lissajousDelta: Math.PI / 2, 
+  
+  // --- Propiedad de VectorSettings --- 
+  isPaused: false,
 };
 
 // Definición explícita del estado base sin las acciones
-interface VectorStoreState {
+export interface VectorStoreState {
   svgLines: ExtendedVectorItem[];
   vectorGridMap: Map<string, number>;
   animationFrameId: number | null;
   isLoading: boolean;
   error: string | null;
-  calculatedGridCols: number;
-  logicalWidth: number;
-  logicalHeight: number;
+  // Agrupar valores calculados
+  calculatedValues: {
+    gridCols: number;
+    logicalWidth: number;
+    logicalHeight: number;
+  };
   settings: VectorSettings;
   pinwheelCenters: PinwheelCenter[];
   lastPulseTime: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  calculatedValues: Record<string, any>;
+  oceanEddies: OceanEddy[];
 }
 
-type PinwheelCenter = { x: number; y: number; vx: number; vy: number };
+// Interfaz para las acciones separada para claridad
+export interface VectorStoreActions {
+  setInitialSettings: (settings: Partial<VectorSettings>) => void;
+  resetSettings: () => void;
+  setSvgLines: (lines: ExtendedVectorItem[]) => void;
+  setCalculatedValues: (gridCols: number, logicalWidth: number, logicalHeight: number) => void;
+  setVectorGridMap: (map: Map<string, number>) => void;
+  updateSetting: <K extends keyof VectorSettings>(key: K, value: VectorSettings[K]) => void;
+  togglePause: () => void;
+  setAnimationType: (type: AnimationType) => void;
+  setVectorShape: (shape: VectorShape) => void;
+  setAspectRatio: (ratio: AspectRatio) => void;
+  setLineCap: (cap: LineCap) => void;
+  setPinwheelCenters: (centers: PinwheelCenter[]) => void;
+  setLastPulseTime: (time: number) => void;
+  setRotationOrigin: (origin: RotationOrigin) => void;
+  setDynamicLengthEnabled: (enabled: boolean) => void;
+  setDynamicLengthIntensity: (intensity: number) => void;
+  // Añadir las que faltaban de la implementación
+  updateVectorAngle: (id: string, angle: number) => void;
+  setAnimationFrameId: (id: number | null) => void;
+  setIsLoading: (isLoading: boolean) => void;
+  setError: (error: string | null) => void;
+  resetStore: () => void;
+}
 
-// Estado inicial base
+// Estado inicial completo
 const initialState: VectorStoreState = {
   svgLines: [],
-  vectorGridMap: new Map<string, number>(),
+  vectorGridMap: new Map(),
   animationFrameId: null,
   isLoading: false,
   error: null,
-  calculatedGridCols: 0,
-  logicalWidth: 0,
-  logicalHeight: 0,
+  calculatedValues: { gridCols: 0, logicalWidth: 0, logicalHeight: 0 },
   settings: { ...defaultSettings },
   pinwheelCenters: [],
   lastPulseTime: 0,
-  calculatedValues: {}
+  oceanEddies: [], 
 };
 
-// Crear store
+// --- STORE --- //
 const createVectorStore = () => create<VectorStore>()(persist(
   (set) => ({
     ...initialState,
-    settings: defaultSettings,
-    svgLines: initialState.svgLines,
-    vectorGridMap: initialState.vectorGridMap,
-    animationFrameId: initialState.animationFrameId,
-    pinwheelCenters: initialState.pinwheelCenters,
-    lastPulseTime: initialState.lastPulseTime,
-    calculatedValues: initialState.calculatedValues,
-    isLoading: initialState.isLoading,
-    error: initialState.error,
-
-    setSettings: (newSettings: PartialVectorSettings & { currentAnimationType?: never } | { currentAnimationType: AnimationType; animationType: AnimationType }) =>
-      set((state) => ({
-        settings: {
-          ...state.settings,
-          ...newSettings
-        }
+    actions: {
+      // Usar setInitialSettings en lugar de setSettings genérico aquí
+      setInitialSettings: (settings) => set(produce((draft: VectorStoreState) => {
+        Object.assign(draft.settings, settings);
+        // Quizás marcar isInitialized aquí si tuviéramos esa propiedad en State
       })),
-    
-    setSvgLines: (lines: ExtendedVectorItem[]) =>
-      set(() => ({ svgLines: lines })),
-
-    updateVectorAngle: (id: string, angle: number) =>
-      set((state) => {
-        const newSvgLines = state.svgLines.map(line => 
-          line.id === id ? { ...line, currentAngle: angle } : line
-        );
-        const newVectorGridMap = new Map(state.vectorGridMap);
-        const index = newSvgLines.findIndex(line => line.id === id);
-        if (index !== -1) {
-          newVectorGridMap.set(id, index); 
-        }
-        return {
-          svgLines: newSvgLines,
-          vectorGridMap: newVectorGridMap 
-        }
-      }),
-
-    setAnimationFrameId: (id: number | null) =>
-      set(() => ({ animationFrameId: id })),
-
-    setIsLoading: (isLoading: boolean) =>
-      set(() => ({ isLoading })),
-
-    setError: (error: string | null) =>
-      set(() => ({ error })),
-
-    setCalculatedValues: (gridCols: number, width: number, height: number) =>
-      set(() => ({
-        calculatedGridCols: gridCols,
-        logicalWidth: width,
-        logicalHeight: height
+      setSvgLines: (lines: ExtendedVectorItem[]) =>
+        set(() => ({ svgLines: lines })), 
+      
+      updateVectorAngle: (id: string, angle: number) =>
+        set(produce((state: VectorStoreState) => {
+          const line = state.svgLines.find(l => l.id === id);
+          if (line) {
+            line.currentAngle = angle;
+          }
+          // Actualizar map es innecesario aquí si los índices no cambian
+        })),
+      
+      setAnimationFrameId: (id: number | null) =>
+        set(() => ({ animationFrameId: id })), 
+      
+      setIsLoading: (isLoading: boolean) =>
+        set(() => ({ isLoading })), 
+      
+      setError: (error: string | null) =>
+        set(() => ({ error })), 
+      
+      // Corregir setCalculatedValues para usar el objeto anidado
+      setCalculatedValues: (gridCols: number, logicalWidth: number, logicalHeight: number) =>
+        set(() => ({ 
+          calculatedValues: { gridCols, logicalWidth, logicalHeight }
+        })), 
+      resetSettings: () =>
+        set(() => ({ settings: { ...defaultSettings } })), // Usar copia
+      resetStore: () =>
+        set(() => ({ 
+          ...initialState,
+          settings: defaultSettings
+        })), 
+      
+      setPinwheelCenters: (centers: PinwheelCenter[]) =>
+        set(() => ({ pinwheelCenters: centers })), 
+      
+      setLastPulseTime: (time: number) =>
+        set(() => ({ lastPulseTime: time })), 
+      
+      setRotationOrigin: (origin: RotationOrigin) => 
+        set(produce((draft: VectorStoreState) => {
+          draft.settings.rotationOrigin = origin;
+        })), 
+      
+      setDynamicLengthEnabled: (enabled: boolean) => 
+        set(produce((draft: VectorStoreState) => {
+          draft.settings.dynamicLengthEnabled = enabled;
+        })), 
+      
+      setDynamicLengthIntensity: (intensity: number) =>
+        set(produce((draft: VectorStoreState) => {
+          draft.settings.dynamicLengthIntensity = intensity;
+        })),
+      togglePause: () => set(produce((draft: VectorStoreState) => {
+        draft.settings.isPaused = !draft.settings.isPaused;
       })),
-
-    resetSettings: () =>
-      set(() => ({ settings: defaultSettings })),
-
-    resetStore: () =>
-      set(() => ({
-        ...initialState,
-        settings: defaultSettings
+      setAnimationType: (type: AnimationType) => set(produce((draft: VectorStoreState) => {
+        draft.settings.animationType = type;
+        draft.settings.currentAnimationType = type; // Actualizar ambas propiedades
       })),
-
-    setPinwheelCenters: (centers: PinwheelCenter[]) =>
-      set(() => ({ pinwheelCenters: centers })),
-
-    setLastPulseTime: (time: number) =>
-      set(() => ({ lastPulseTime: time })),
+      setVectorShape: (shape: VectorShape) => set(produce((draft: VectorStoreState) => {
+        draft.settings.vectorShape = shape;
+      })),
+      setAspectRatio: (ratio: AspectRatio) => set(produce((draft: VectorStoreState) => {
+        draft.settings.aspectRatio = ratio;
+      })),
+      setLineCap: (cap: LineCap) => set(produce((draft: VectorStoreState) => {
+        // Actualizar vectorLineCap (propiedad correcta) y strokeLinecap (para compatibilidad)
+        draft.settings.vectorLineCap = cap;
+        draft.settings.strokeLinecap = cap; // Mantener compatibilidad con código anterior
+      })),
+      setVectorGridMap: (map: Map<string, number>) => set({ vectorGridMap: map }),
+      updateSetting: <K extends keyof VectorSettings>(key: K, value: VectorSettings[K]) => 
+        set(produce((draft: VectorStoreState) => {
+          if (key in draft.settings) {
+            (draft.settings as any)[key] = value;
+          } else {
+            console.warn(`Attempted to update non-setting key: ${key}`);
+          }
+      })),
+    }
   }),
   {
     name: 'vector-store',
@@ -275,3 +362,6 @@ export const selectApplicationState = (state: VectorStore) => ({
   isLoading: state.isLoading,
   error: state.error
 });
+
+// Selector para obtener solo las acciones
+export const useVectorActions = () => useVectorStore((state) => state.actions);

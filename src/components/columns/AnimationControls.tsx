@@ -5,27 +5,27 @@ import { isValidAnimationType } from "../vector/core/types";
 
 export function AnimationControls() {
   const settings = useVectorStore((state) => state.settings);
-  const setSettings = useVectorStore((state) => state.setSettings);
+  const { 
+    setAnimationType, 
+    updateSetting 
+  } = useVectorStore((state) => state.actions);
   
   // Manejadores de eventos
   const handleAnimationTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     if (isValidAnimationType(value)) {
-      setSettings({
-        currentAnimationType: value,
-        animationType: value
-      });
+      setAnimationType(value);
     }
   };
   
   const handleAnimationSpeedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(e.target.value);
-    setSettings({ animationSpeedFactor: value });
+    updateSetting('animationSpeedFactor', value);
   };
   
   const handleEasingFactorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(e.target.value);
-    setSettings({ easingFactor: value });
+    updateSetting('easingFactor', value);
   };
   return (
     <div className="space-y-4">
@@ -115,7 +115,7 @@ export function AnimationControls() {
                       max="2" 
                       step="0.1" 
                       value={settings.vortexStrength}
-                      onChange={(e) => setSettings({ vortexStrength: parseFloat(e.target.value) })}
+                      onChange={(e) => updateSetting('vortexStrength', parseFloat(e.target.value))}
                       className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
                     />
                     <span className="text-xs w-8 text-right">{settings.vortexStrength.toFixed(1)}</span>
@@ -130,7 +130,7 @@ export function AnimationControls() {
                       max="100" 
                       step="1" 
                       value={settings.vortexCenterX}
-                      onChange={(e) => setSettings({ vortexCenterX: parseInt(e.target.value) })}
+                      onChange={(e) => updateSetting('vortexCenterX', parseInt(e.target.value))}
                       className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
                     />
                     <span className="text-xs w-8 text-right">{settings.vortexCenterX}</span>
@@ -145,7 +145,7 @@ export function AnimationControls() {
                       max="100" 
                       step="1" 
                       value={settings.vortexCenterY}
-                      onChange={(e) => setSettings({ vortexCenterY: parseInt(e.target.value) })}
+                      onChange={(e) => updateSetting('vortexCenterY', parseInt(e.target.value))}
                       className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
                     />
                     <span className="text-xs w-8 text-right">{settings.vortexCenterY}</span>
@@ -166,7 +166,7 @@ export function AnimationControls() {
                       max="50" 
                       step="1" 
                       value={settings.geometricPatternSize}
-                      onChange={(e) => setSettings({ geometricPatternSize: parseFloat(e.target.value) })}
+                      onChange={(e) => updateSetting('geometricPatternSize', parseFloat(e.target.value))}
                       className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
                     />
                     <span className="text-xs w-8 text-right">{settings.geometricPatternSize}</span>
@@ -181,7 +181,7 @@ export function AnimationControls() {
                       max="10" 
                       step="1" 
                       value={settings.geometricPatternComplexity}
-                      onChange={(e) => setSettings({ geometricPatternComplexity: parseInt(e.target.value) })}
+                      onChange={(e) => updateSetting('geometricPatternComplexity', parseInt(e.target.value))}
                       className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
                     />
                     <span className="text-xs w-8 text-right">{settings.geometricPatternComplexity}</span>
@@ -196,7 +196,7 @@ export function AnimationControls() {
                       max="2" 
                       step="0.1" 
                       value={settings.geometricPatternRotationSpeed}
-                      onChange={(e) => setSettings({ geometricPatternRotationSpeed: parseFloat(e.target.value) })}
+                      onChange={(e) => updateSetting('geometricPatternRotationSpeed', parseFloat(e.target.value))}
                       className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
                     />
                     <span className="text-xs w-8 text-right">{settings.geometricPatternRotationSpeed.toFixed(1)}</span>
@@ -217,7 +217,7 @@ export function AnimationControls() {
                       max="2" 
                       step="0.1" 
                       value={settings.followPathSpeed}
-                      onChange={(e) => setSettings({ followPathSpeed: parseFloat(e.target.value) })}
+                      onChange={(e) => updateSetting('followPathSpeed', parseFloat(e.target.value))}
                       className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
                     />
                     <span className="text-xs w-8 text-right">{settings.followPathSpeed.toFixed(1)}</span>
@@ -232,7 +232,7 @@ export function AnimationControls() {
                       max="5" 
                       step="1" 
                       value={settings.followPathComplexity}
-                      onChange={(e) => setSettings({ followPathComplexity: parseInt(e.target.value) })}
+                      onChange={(e) => updateSetting('followPathComplexity', parseInt(e.target.value))}
                       className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
                     />
                     <span className="text-xs w-8 text-right">{settings.followPathComplexity}</span>
@@ -247,7 +247,7 @@ export function AnimationControls() {
                       max="1" 
                       step="0.1" 
                       value={settings.followPathVariation}
-                      onChange={(e) => setSettings({ followPathVariation: parseFloat(e.target.value) })}
+                      onChange={(e) => updateSetting('followPathVariation', parseFloat(e.target.value))}
                       className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
                     />
                     <span className="text-xs w-8 text-right">{settings.followPathVariation.toFixed(1)}</span>
@@ -268,7 +268,7 @@ export function AnimationControls() {
                       max="10" 
                       step="1" 
                       value={settings.lissajousParamA}
-                      onChange={(e) => setSettings({ lissajousParamA: parseInt(e.target.value) })}
+                      onChange={(e) => updateSetting('lissajousParamA', parseInt(e.target.value))}
                       className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
                     />
                     <span className="text-xs w-8 text-right">{settings.lissajousParamA}</span>
@@ -283,7 +283,7 @@ export function AnimationControls() {
                       max="10" 
                       step="1" 
                       value={settings.lissajousParamB}
-                      onChange={(e) => setSettings({ lissajousParamB: parseInt(e.target.value) })}
+                      onChange={(e) => updateSetting('lissajousParamB', parseInt(e.target.value))}
                       className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
                     />
                     <span className="text-xs w-8 text-right">{settings.lissajousParamB}</span>
@@ -298,7 +298,7 @@ export function AnimationControls() {
                       max="0.005" 
                       step="0.0001" 
                       value={settings.lissajousFrequency}
-                      onChange={(e) => setSettings({ lissajousFrequency: parseFloat(e.target.value) })}
+                      onChange={(e) => updateSetting('lissajousFrequency', parseFloat(e.target.value))}
                       className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
                     />
                     <span className="text-xs w-8 text-right">{settings.lissajousFrequency.toFixed(4)}</span>
@@ -316,7 +316,7 @@ export function AnimationControls() {
                       onChange={(e) => {
                         const degrees = parseInt(e.target.value);
                         const radians = degrees * Math.PI / 180;
-                        setSettings({ lissajousDelta: radians });
+                        updateSetting('lissajousDelta', radians);
                       }}
                       className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
                     />
@@ -336,7 +336,7 @@ export function AnimationControls() {
                     min="5" 
                     max="50" 
                     value={settings.mouseAttractionRadius}
-                    onChange={(e) => setSettings({ mouseAttractionRadius: parseInt(e.target.value) })}
+                    onChange={(e) => updateSetting('mouseAttractionRadius', parseInt(e.target.value))}
                     className="w-full bg-muted text-foreground text-xs p-2 border border-input focus:outline-none" 
                   />
                   <span className="text-xs">%</span>

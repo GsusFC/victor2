@@ -5,6 +5,8 @@ import type { VectorItem } from './types';
  */
 export interface ExtendedVectorItem extends VectorItem {
   targetAngle?: number;
+  previousAngle?: number; // Almacena el ángulo anterior para calcular velocidad angular
   layer: number;
   activationTime: number;
+  lengthFactor?: number; // Factor de longitud dinámico calculado en la animación
 }

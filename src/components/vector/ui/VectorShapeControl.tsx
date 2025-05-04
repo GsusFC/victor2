@@ -7,7 +7,7 @@ import { VectorShape } from '@/components/vector/core/types';
 export function VectorShapeControl() {
   // Obtener la forma actual y la función para actualizarla
   const vectorShape = useVectorStore((state) => state.settings.vectorShape);
-  const setSettings = useVectorStore((state) => state.setSettings);
+  const updateSetting = useVectorStore((state) => state.actions.updateSetting);
 
   // Opciones de formas disponibles
   const shapeOptions = [
@@ -23,7 +23,11 @@ export function VectorShapeControl() {
   const handleShapeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newShape = e.target.value as VectorShape;
     console.log('[VectorShapeControl] Cambiando forma a:', newShape);
-    setSettings({ vectorShape: newShape });
+    if (['line', 'arrow', 'dot', 'triangle', 'semicircle', 'curve'].includes(newShape)) {
+      updateSetting('vectorShape', newShape);
+    } else {
+      console.error('Invalid vector shape selected:', newShape);
+    }
   };
 
   return (

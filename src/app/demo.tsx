@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { VectorCanvasSVG } from '@/components/vector/VectorCanvasSVG';
+import NewVectorCanvas from '@/components/vector/NewVectorCanvas';
 
 /**
  * Página de demostración para el canvas modular
@@ -13,7 +13,7 @@ export default function Demo() {
         Visualización de Vectores - Versión SVG
       </h1>
       <div className="max-w-6xl w-full">
-        <VectorCanvasSVG />
+        <NewVectorCanvas />
       </div>
       <div className="mt-8 text-white text-sm">
         <p>Este componente utiliza una arquitectura mejorada con:</p>

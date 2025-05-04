@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { useVectorStore } from '@/lib/store';
 import { AspectRatioControl } from '@/components/vector/ui/AspectRatioControl';
 import { 
@@ -17,26 +17,16 @@ export function AnimatedVectorCanvas() {
   // Estado de Zustand
   const {
     settings,
-    setSettings, // Volver a añadir para el botón de pausa
+    actions: { setSettings, setCalculatedValues, setSvgLines, setPinwheelCenters, setLastPulseTime },
+    calculatedValues: { logicalWidth, logicalHeight },
     pinwheelCenters,
-    setPinwheelCenters,
     lastPulseTime,
-    setLastPulseTime,
-    setCalculatedValues,
-    setSvgLines, // Añadir para guardar los vectores para exportación
-    logicalWidth,
-    logicalHeight
-  } = useVectorStore((state) => ({ // Seleccionar explícitamente
+  } = useVectorStore((state) => ({ 
     settings: state.settings,
-    setSettings: state.setSettings, // Volver a añadir
+    actions: state.actions,
+    calculatedValues: state.calculatedValues,
     pinwheelCenters: state.pinwheelCenters,
-    setPinwheelCenters: state.setPinwheelCenters,
     lastPulseTime: state.lastPulseTime,
-    setLastPulseTime: state.setLastPulseTime,
-    setCalculatedValues: state.setCalculatedValues,
-    setSvgLines: state.setSvgLines,
-    logicalWidth: state.logicalWidth,
-    logicalHeight: state.logicalHeight
   }));
   
   // Inicializar centros de molinetes si se necesitan
@@ -52,8 +42,10 @@ export function AnimatedVectorCanvas() {
         newCenters.push({
           x: Math.random() * width * 0.8 + width * 0.1,
           y: Math.random() * height * 0.8 + height * 0.1,
-          vx: (Math.random() - 0.5) * 2,
-          vy: (Math.random() - 0.5) * 2
+          // vx: (Math.random() - 0.5) * 2, // Velocidad inicial aleatoria
+          // vy: (Math.random() - 0.5) * 2,
+          strength: currentSettings.pinwheelStrength * (Math.random() + 0.5), // Variación fuerza
+          speed: currentSettings.pinwheelSpeed * (Math.random() * 0.5 + 0.75) // Variación velocidad
         });
       }
       
@@ -289,7 +281,8 @@ export function AnimatedVectorCanvas() {
     settings.vectorShape, // Añadida dependencia faltante para el tipo de forma
     settings.currentAnimationType,
     initializePinwheelCenters,
-    setCalculatedValues
+    setCalculatedValues,
+    setSvgLines // Añadida dependencia faltante para guardar los vectores SVG
   ]);
 
   // Función para actualizar la posición y velocidad de los centros de los molinetes
@@ -300,26 +293,26 @@ export function AnimatedVectorCanvas() {
     }
 
     const newCenters = pinwheelCenters.map(center => {
-      let { x, y, vx, vy } = center;
+      let { x, y } = center;
 
       // Usar animationSpeedFactor en lugar de pinwheelSpeed
       const speedFactor = settings.animationSpeedFactor;
 
       // Mover centro
-      x += vx * speedFactor;
-      y += vy * speedFactor;
+      // x += vx * speedFactor;
+      // y += vy * speedFactor;
 
       // Lógica de rebote en los bordes del canvas
-      if (x < 0 || x > logicalWidth) {
-        vx *= -1; // Invertir velocidad horizontal
-        x = Math.max(0, Math.min(logicalWidth, x)); // Corregir posición
-      }
-      if (y < 0 || y > logicalHeight) {
-        vy *= -1; // Invertir velocidad vertical
-        y = Math.max(0, Math.min(logicalHeight, y)); // Corregir posición
-      }
+      // if (x < 0 || x > logicalWidth) {
+      //   vx *= -1; // Invertir velocidad horizontal
+      //   x = Math.max(0, Math.min(logicalWidth, x)); // Corregir posición
+      // }
+      // if (y < 0 || y > logicalHeight) {
+      //   vy *= -1; // Invertir velocidad vertical
+      //   y = Math.max(0, Math.min(logicalHeight, y)); // Corregir posición
+      // }
 
-      return { x, y, vx, vy };
+      return { x, y };
     });
 
     setPinwheelCenters(newCenters);
@@ -515,19 +508,19 @@ export function AnimatedVectorCanvas() {
       switch (e.key) {
         case '1':
           console.log('[KeyShortcut] Cambiando a 16:9');
-          setSettings({ aspectRatio: '16:9' });
+          actions.setSettings({ aspectRatio: '16:9' });
           break;
         case '2':
           console.log('[KeyShortcut] Cambiando a 1:1');
-          setSettings({ aspectRatio: '1:1' });
+          actions.setSettings({ aspectRatio: '1:1' });
           break;
         case '3':
           console.log('[KeyShortcut] Cambiando a 2:1');
-          setSettings({ aspectRatio: '2:1' });
+          actions.setSettings({ aspectRatio: '2:1' });
           break;
         case 'p':
           console.log('[KeyShortcut] Alternando pausa');
-          setSettings({ isPaused: !settings.isPaused });
+          actions.setSettings({ isPaused: !settings.isPaused });
           break;
       }
     };
@@ -540,7 +533,7 @@ export function AnimatedVectorCanvas() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [setSettings, settings.isPaused]); // Dependencia settings.isPaused para alternar
+  }, [actions.setSettings, settings.isPaused]); // Dependencia settings.isPaused para alternar
 
   // Determinar las dimensiones basadas en la relación de aspecto actual
   const getContainerStyle = () => {
@@ -583,7 +576,7 @@ export function AnimatedVectorCanvas() {
         {/* Indicador de estado izquierdo - botón siempre visible */}
         <div className="flex items-center space-x-3">
           <button
-            onClick={() => setSettings({ isPaused: !settings.isPaused })}
+            onClick={() => actions.setSettings({ isPaused: !settings.isPaused })}
             className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium font-mono uppercase opacity-100 visible ${settings.isPaused
                 ? 'bg-green-600 text-white' 
                 : 'bg-red-600 text-white'

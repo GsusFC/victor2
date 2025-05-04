@@ -8,7 +8,8 @@ import { type AspectRatio } from '@/components/vector/core/types';
 export function AspectRatioControl() {
   // Seleccionar cada parte del estado por separado para optimización
   const aspectRatio = useVectorStore((state) => state.settings.aspectRatio);
-  const setSettings = useVectorStore((state) => state.setSettings); // Corregido: updateSettings -> setSettings
+  // Obtener la acción específica para modificar el aspect ratio
+  const setAspectRatio = useVectorStore((state) => state.actions.setAspectRatio);
 
   // Opciones de relación de aspecto
   // Usar 'as const' para inferir los tipos literales correctos
@@ -39,7 +40,7 @@ export function AspectRatioControl() {
   // El tipo del parámetro ahora es inferido correctamente desde las opciones tipadas
   const handleAspectRatioChange = (newAspectRatio: AspectRatio) => {
     console.log('[AspectRatioControl] handleAspectRatioChange - Nuevo ratio:', newAspectRatio);
-    setSettings({ aspectRatio: newAspectRatio }); // Corregido: updateSettings -> setSettings
+    setAspectRatio(newAspectRatio);
   };
 
   return (

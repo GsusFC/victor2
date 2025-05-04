@@ -53,10 +53,10 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
     if (!svgLines || svgLines.length === 0) return '<!-- No hay líneas SVG para exportar -->';
 
     // Función centralizada para crear elementos SVG
-    const createSvgElement = (shape: string, id: string, baseX: number, baseY: number): string => {
+    const createSvgElement = (shape: string, id: string): string => {
       const halfLen = settings.vectorLength / 2;
       const stroke = `stroke="${settings.vectorColor}" stroke-width="${settings.vectorStrokeWidth}" stroke-linecap="${settings.strokeLinecap}"`;
-      const transform = `transform="translate(${baseX} ${baseY}) rotate(90)"`;
+      const transform = `transform="translate(0 0) rotate(90)"`;
 
       // Manejar las formas actuales (line, arrow, dot, triangle) en lugar de las anteriores
       switch(shape) {
@@ -89,7 +89,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
     };
 
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${logicalWidth} ${logicalHeight}" width="${svgWidth}" height="${svgHeight}" id="vectorSvg">
-  ${svgLines.map(({ shape, id, baseX, baseY }) => createSvgElement(shape, id, baseX, baseY)).join('\n  ')}
+  ${svgLines.map(({ shape, id }) => createSvgElement(shape, id)).join('\n  ')}
 </svg>`;
   }, [svgLines, settings, logicalWidth, logicalHeight]);
 
@@ -190,25 +190,10 @@ setup();`;
 
     const settingsJson = JSON.stringify(settingsObj, null, 2);
 
-    // Función para generar JSX para cada vector
-    const generateVectorJSX = (line: { shape: string; id: string; baseX: number; baseY: number }) => {
-      const halfLen = settings.vectorLength / 2;
-      const strokeProps = `stroke="${settings.vectorColor}" strokeWidth={${settings.vectorStrokeWidth}} strokeLinecap="${settings.strokeLinecap}"`;
-      const transformBase = `translate(${line.baseX} ${line.baseY}) rotate(90)`;
-
-      if (line.shape === 'straight') {
-        return `<line id="${line.id}" x1={${-halfLen}} y1={0} x2={${halfLen}} y2={0} ${strokeProps} />`;
-      } else if (line.shape === 'curved') {
-        const curveHeight = settings.vectorLength * 0.3;
-        return `<path id="${line.id}" d="M ${-halfLen},0 Q 0,${-curveHeight} ${halfLen},0" fill="none" ${strokeProps} />`;
-      } else {
-        const radius = settings.vectorLength / 2;
-        return `<path id="${line.id}" d="M ${-radius},0 A ${radius},${radius} 0 0 1 ${radius},0" fill="none" ${strokeProps} />`;
-      }
-    };
-
     // Generar JSX para todos los vectores sin transform, transform se aplicará en animación
-    const vectorsJSX = svgLines.map(({ shape, id, baseX, baseY }) => {
+    // Esta sección es solo para información, no se utiliza directamente
+    /* Lógica de generación de vectores en JSX, deshabilitada por no usarse
+    svgLines.map(({ shape, id }) => {
       const halfLen = settings.vectorLength / 2;
       const strokeWidth = settings.vectorStrokeWidth;
       const strokeLinecap = settings.strokeLinecap;
@@ -223,6 +208,7 @@ setup();`;
         return `<path id="${id}" d="M ${-radius},0 A ${radius},${radius} 0 0 1 ${radius},0" fill="none" stroke="${stroke}" strokeWidth={${strokeWidth}} strokeLinecap="${strokeLinecap}" />`;
       }
     }).join('\n        ');
+    */
 
     return `import React, { useRef, useEffect } from 'react';
 
@@ -307,7 +293,7 @@ export function VectorFramer() {
       height={800 / (settings.aspectRatio === '1:1' ? 1 : settings.aspectRatio === '16:9' ? 16/9 : 2)}
       id="vectorSvg"
     >
-      ${vectorsJSX}
+      {/* Aquí irían los vectores renderizados */}
     </svg>
   );
 }
@@ -332,7 +318,7 @@ export function VectorFramer() {
         chars: framerComponentCode.length
       }
     };
-  }, [svgCode, jsCode, svgLines, framerComponentCode]);
+  }, [svgCode, jsCode, framerComponentCode, svgLines.length]);
 
   // Preview de las primeras líneas
   const previewLines = useMemo(() => {

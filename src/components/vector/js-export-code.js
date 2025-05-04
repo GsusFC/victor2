@@ -25,11 +25,12 @@ function getAngle(type, x, y, t, mx, my) {
 }
 
 function animate(elements, timestamp, prevTime, mx, my) {
-  const delta = (timestamp - prevTime) / 1000;
+  // Calcular el tiempo de animación
   const time = timestamp * 0.001 * settings.animationSpeedFactor;
 
-  elements.forEach((el, i) => {
-    const [_, row, col] = el.id.split('-');
+  elements.forEach((el) => {
+    // Extraer coordenadas del ID (fila y columna)
+    const [/* unused */, row, col] = el.id.split('-');
     const x = col * settings.vectorSpacing + settings.vectorSpacing / 2;
     const y = row * settings.vectorSpacing + settings.vectorSpacing / 2;
 

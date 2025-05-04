@@ -68,6 +68,39 @@ export const isValidVectorShape = (shape: unknown): shape is VectorShape => {
   return ['line', 'arrow', 'dot', 'triangle', 'semicircle', 'curve'].includes(shape as string);
 };
 
+// Tipo para el origen de la rotación del vector
+export type RotationOrigin = 'start' | 'center' | 'end';
+
+// Mapa para buscar vectores por coordenadas de rejilla
+export type VectorGridMap = Map<string, number>;
+
+// --- Interfaces Principales --- //
+export interface PinwheelCenter {
+  x: number;
+  y: number;
+  strength: number;
+  speed: number;
+}
+
+export interface OceanEddy {
+  x: number;
+  y: number;
+  strength: number;
+  radius: number;
+}
+
+// Representa un único vector/línea en el SVG
+export interface VectorItem {
+  id: string;
+  baseX: number;
+  baseY: number;
+  currentAngle: number;
+  r: number;
+  c: number;
+  flockId: number;
+  shape: string;
+}
+
 // Configuración base
 export interface BaseVectorSettings {
   vectorLength: number;
@@ -91,6 +124,9 @@ export interface BaseVectorSettings {
   vortexInwardFactor: number;
   jitterIntensity: number;
   pulseInterval: number; // Añadido para animación 'centerPulse'
+  rotationOrigin: RotationOrigin; // Añadido
+  dynamicLengthEnabled: boolean; // ¿La longitud varía dinámicamente?
+  dynamicLengthIntensity: number; // ¿Cuánto afecta la velocidad a la longitud?
 }
 
 // Configuración de animación

@@ -11,7 +11,7 @@ const PRESET_STORAGE_KEY = 'vectorPreset';
 
 export const PresetButtons: React.FC = () => {
   const settings = useVectorStore((state) => state.settings);
-  const setSettings = useVectorStore((state) => state.setSettings);
+  const { setInitialSettings } = useVectorStore((state) => state.actions);
 
   const handleSavePreset = () => {
     try {
@@ -36,7 +36,7 @@ export const PresetButtons: React.FC = () => {
         if (parsedPreset.animationType) {
           // Caso 1: animationType existe en el preset.
           // Pasar un objeto que cumple la firma { animationType, currentAnimationType, ...rest }
-          setSettings({
+          setInitialSettings({
             ...parsedPreset,
             animationType: parsedPreset.animationType,
             currentAnimationType: parsedPreset.animationType, // Asegurar sincronización
@@ -47,7 +47,7 @@ export const PresetButtons: React.FC = () => {
           // usando desestructuración para que TS sepa que no está presente.
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { currentAnimationType, ...restOfPreset } = parsedPreset; // Ignorar var no usada
-          setSettings(restOfPreset);
+          setInitialSettings(restOfPreset);
         }
 
         console.log('Preset cargado desde localStorage.');
