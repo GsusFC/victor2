@@ -1,14 +1,15 @@
 import React, { useRef, useCallback, useEffect } from 'react'; // useState ya no se usa
 import Victor from 'victor'; // Importar Victor, ahora sí es necesario
 import { useVectorStore } from '@/lib/store';
+import { CANVAS_PADDING } from '@/lib/constants';
 // Tipos necesarios, incluyendo ExtendedVectorItem
 import { type ExtendedVectorItem } from '@/components/vector/core/vectorTypes';
 // Corregir rutas de importación de Hooks
 import { useContainerDimensions } from '@/hooks/vector/useContainerDimensions';
 import { useVectorGrid } from '@/hooks/vector/useVectorGrid';
 import { useVectorAnimation } from '@/hooks/vector/useVectorAnimation';
-import { AspectRatioControl } from './ui/AspectRatioControl'; 
- 
+import { AspectRatioControl } from './ui/AspectRatioControl';
+
 const VectorCanvasSVG: React.FC = () => {
   const settings = useVectorStore((state) => state.settings);
   // Seleccionar estado y acciones necesarias del store
@@ -45,15 +46,6 @@ const VectorCanvasSVG: React.FC = () => {
     }
   }, []);
 
-  // Inicializar o reinicializar la cuadrícula y limpiar animación
-  useEffect(() => {
-    if (dimensions.width > 0 && dimensions.height > 0) {
-      initializeVectorGrid();
-    }
-    // Añadir dependencia faltante y limpiar
-    return clearAnimationFrameHelper;
-  }, [dimensions.width, dimensions.height, initializeVectorGrid, clearAnimationFrameHelper]); 
-
   // --- Animación principal: Actualiza el estado de los vectores (ángulos) ---
   const runAnimationLoop = useCallback(() => {
     clearAnimationFrameHelper(); 
@@ -79,21 +71,27 @@ const VectorCanvasSVG: React.FC = () => {
             ...item,
             currentAngle: easedAngle % 360, // Mantener ángulo en 0-360
           } as ExtendedVectorItem; // <-- Aserción aquí
-        })
+        }),
       }));
 
-      // Solicitar el siguiente frame
-      animationFrameRef.current = requestAnimationFrame(animate);
+      // Continuar loop de animación solo si no está pausado
+      if (!settings.isPaused) {
+        animationFrameRef.current = requestAnimationFrame(animate);
+      }
     };
 
-    // Iniciar bucle
+    // Iniciar loop de animación
     animationFrameRef.current = requestAnimationFrame(animate);
-  }, [
-    settings.easingFactor,
-    calculateTargetAngle, 
-    dimensions, // Añadir dimensions como dependencia si se usa en calculateTargetAngle
-    clearAnimationFrameHelper
-  ]);
+  }, [clearAnimationFrameHelper, calculateTargetAngle, dimensions, settings.easingFactor, settings.isPaused]);
+
+  // Inicializar o reinicializar la cuadrícula y limpiar animación
+  useEffect(() => {
+    if (dimensions.width > 0 && dimensions.height > 0) {
+      initializeVectorGrid();
+    }
+    // Añadir dependencia faltante y limpiar
+    return clearAnimationFrameHelper;
+  }, [dimensions.width, dimensions.height, initializeVectorGrid, clearAnimationFrameHelper]); 
 
   // Efecto para iniciar la animación
   useEffect(() => {
@@ -121,8 +119,14 @@ const VectorCanvasSVG: React.FC = () => {
     const clientHeight = svgRect.height;
 
     // Calcular coordenadas lógicas dentro del viewBox del SVG
-    const mouseX = (svgX / clientWidth) * dimensions.width;
-    const mouseY = (svgY / clientHeight) * dimensions.height;
+    // Considerando el marco de respeto (padding)
+    const viewBoxWidth = dimensions.width + CANVAS_PADDING * 2;
+    const viewBoxHeight = dimensions.height + CANVAS_PADDING * 2;
+    
+    // Convertir coordenadas de cliente a coordenadas SVG y ajustar por el padding
+    const mouseX = (svgX / clientWidth) * viewBoxWidth - CANVAS_PADDING;
+    const mouseY = (svgY / clientHeight) * viewBoxHeight - CANVAS_PADDING;
+    
     // Actualizar el ref en lugar del estado
     mouseRef.current = new Victor(mouseX, mouseY);
   }, [dimensions.width, dimensions.height]); // Depende de dimensions para el cálculo
@@ -136,45 +140,134 @@ const VectorCanvasSVG: React.FC = () => {
     <div className="relative w-full h-full flex flex-col items-center justify-center">
       <div
         ref={containerRef}
-        className={`${getContainerClasses()} bg-background`} // Llamar a la función
+        className={`${getContainerClasses()} bg-background`}
         style={{ backgroundColor: settings.backgroundColor }}
       >
         <svg
           ref={svgRef} // Asignar ref al SVG
           className="absolute top-0 left-0 w-full h-full block align-middle overflow-hidden" // Añadir overflow-hidden aquí?
           preserveAspectRatio="xMidYMid meet"
-          viewBox={`0 0 ${dimensions.width || 100} ${dimensions.height || 100}`}
+          viewBox={`-${CANVAS_PADDING} -${CANVAS_PADDING} ${(dimensions.width || 100) + CANVAS_PADDING * 2} ${(dimensions.height || 100) + CANVAS_PADDING * 2}`}
           xmlns="http://www.w3.org/2000/svg"
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
           <defs />
           <g>
-            {/* Renderizado: Calcular puntos x1,y1,x2,y2 en base al estado del vector */}
+            {/* Renderizado: Generar elementos SVG según el tipo de forma seleccionada */}
             {svgLines.map((item) => {
               const angleRad = item.currentAngle * (Math.PI / 180);
               const x1 = item.baseX;
               const y1 = item.baseY;
               const x2 = item.baseX + Math.cos(angleRad) * settings.vectorLength;
               const y2 = item.baseY + Math.sin(angleRad) * settings.vectorLength;
-              return (
-                <line
-                  key={item.id} // Usar ID único del item
-                  x1={x1}
-                  y1={y1}
-                  x2={x2}
-                  y2={y2}
-                  stroke={settings.vectorColor}
-                  strokeWidth={settings.vectorWidth}
-                  strokeLinecap="round"
-                />
-              );
+              
+              // Determinar el centro de rotación para la transformación
+              const rotateAroundX = x1;
+              const rotateAroundY = y1;
+              
+              const vectorShape = item.shape || settings.vectorShape;
+              
+              // Renderizar el elemento SVG según el tipo de forma
+              switch(vectorShape) {
+                case 'arrow':
+                  // Flecha (grupo con línea y punta)
+                  return (
+                    <g key={item.id} transform={`rotate(${item.currentAngle}, ${rotateAroundX}, ${rotateAroundY})`}>
+                      <line 
+                        x1={x1} 
+                        y1={y1} 
+                        x2={x1 + settings.vectorLength - 5} 
+                        y2={y1} 
+                        stroke={settings.vectorColor}
+                        strokeWidth={settings.vectorWidth}
+                        strokeLinecap={settings.strokeLinecap}
+                      />
+                      <polygon 
+                        points={`${x1 + settings.vectorLength},${y1} ${x1 + settings.vectorLength - 5},${y1 - 2.5} ${x1 + settings.vectorLength - 5},${y1 + 2.5}`}
+                        fill={settings.vectorColor}
+                      />
+                    </g>
+                  );
+                  
+                case 'dot':
+                  // Punto (círculo)
+                  return (
+                    <circle
+                      key={item.id}
+                      cx={x1 + (settings.vectorLength/2) * Math.cos(angleRad)}
+                      cy={y1 + (settings.vectorLength/2) * Math.sin(angleRad)}
+                      r={settings.vectorWidth * 2}
+                      fill={settings.vectorColor}
+                    />
+                  );
+                  
+                case 'triangle':
+                  // Triángulo
+                  const h = settings.vectorLength * 0.4;
+                  return (
+                    <g key={item.id} transform={`rotate(${item.currentAngle}, ${rotateAroundX}, ${rotateAroundY})`}>
+                      <polygon
+                        points={`${x1 + settings.vectorLength/2},${y1 - h} ${x1 + settings.vectorLength/2 + h/2},${y1 + h/2} ${x1 + settings.vectorLength/2 - h/2},${y1 + h/2}`}
+                        fill="none"
+                        stroke={settings.vectorColor}
+                        strokeWidth={settings.vectorWidth}
+                        strokeLinecap={settings.strokeLinecap}
+                      />
+                    </g>
+                  );
+                  
+                case 'semicircle':
+                  // Semicircunferencia
+                  const radius = settings.vectorLength / 2;
+                  return (
+                    <g key={item.id} transform={`rotate(${item.currentAngle}, ${rotateAroundX}, ${rotateAroundY})`}>
+                      <path
+                        d={`M ${x1},${y1} A ${radius},${radius} 0 0,1 ${x1 + settings.vectorLength},${y1}`}
+                        fill="none"
+                        stroke={settings.vectorColor}
+                        strokeWidth={settings.vectorWidth}
+                        strokeLinecap={settings.strokeLinecap}
+                      />
+                    </g>
+                  );
+                  
+                case 'curve':
+                  // Curva Bézier cuadrática
+                  const controlY = y1 - settings.vectorLength * 0.3;
+                  return (
+                    <g key={item.id} transform={`rotate(${item.currentAngle}, ${rotateAroundX}, ${rotateAroundY})`}>
+                      <path
+                        d={`M ${x1},${y1} Q ${x1 + settings.vectorLength/2},${controlY} ${x1 + settings.vectorLength},${y1}`}
+                        fill="none"
+                        stroke={settings.vectorColor}
+                        strokeWidth={settings.vectorWidth}
+                        strokeLinecap={settings.strokeLinecap}
+                      />
+                    </g>
+                  );
+                  
+                default:
+                  // Línea por defecto
+                  return (
+                    <line
+                      key={item.id}
+                      x1={x1}
+                      y1={y1}
+                      x2={x2}
+                      y2={y2}
+                      stroke={settings.vectorColor}
+                      strokeWidth={settings.vectorWidth}
+                      strokeLinecap={settings.strokeLinecap}
+                    />
+                  );
+              }
             })}
           </g>
         </svg>
       </div>
-      {/* El componente AspectRatioControl maneja su estado internamente */}
-      <AspectRatioControl /> 
+      {/* Control de relación de aspecto */}
+      <AspectRatioControl />
     </div>
   );
 };

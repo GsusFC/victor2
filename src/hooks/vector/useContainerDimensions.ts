@@ -28,32 +28,31 @@ export const useContainerDimensions = ({ containerRef, aspectRatio }: UseContain
    */
   const getContainerClasses = useCallback(() => {
     // Clases base que se aplican siempre 
-    const baseClasses = "relative mx-auto transition-all duration-300 ease-in-out shadow-lg rounded-lg overflow-hidden";
+    const baseClasses = "relative transition-all duration-300 ease-in-out shadow-lg rounded-lg overflow-hidden";
     
-    // Altura fija de 600px para todas las relaciones de aspecto
-    // El ancho se calcula en función de la relación de aspecto
+    // Dimensiones diferentes según el tipo de relación de aspecto
     let dimensionClasses = "";
     
     switch (aspectRatio) {
       case '1:1':
-        // Para 1:1 (cuadrado), el ancho también es 600px
-        dimensionClasses = "h-[600px] w-[600px]";
+        // Formato cuadrado
+        dimensionClasses = "h-[600px] w-[600px] mx-auto";
         break;
       case '2:1':
-        // Para 2:1, el ancho es el doble de la altura: 1200px
-        dimensionClasses = "h-[600px] w-[1200px]";
+        // Formato panorámico
+        dimensionClasses = "h-[600px] w-[1200px] mx-auto";
         break;
       case '16:9':
-        // Para 16:9, el ancho es aproximadamente 1067px (600 * 16/9)
-        dimensionClasses = "h-[600px] w-[1067px]";
+        // Formato widescreen (16:9 significa que width = height * 16/9)
+        dimensionClasses = "h-[600px] w-[1067px] mx-auto";
         break;
       case 'free':
-        // Para tamaño libre, mantenemos solo la altura
-        dimensionClasses = "h-[600px] w-full max-w-full";
+        // Formato libre al 100%
+        dimensionClasses = "h-full w-full max-w-full";
         break;
       default:
         // Por defecto usar 16:9
-        dimensionClasses = "h-[600px] w-[1067px]";
+        dimensionClasses = "h-[600px] w-[1067px] mx-auto";
         break;
     }
     

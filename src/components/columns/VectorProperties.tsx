@@ -45,7 +45,7 @@ export function VectorProperties() {
   
   const handleVectorLengthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
-    if (!isNaN(value) && value >= 2 && value <= 50) {
+    if (!isNaN(value) && value >= 1) {
       setSettings({ vectorLength: value });
     }
   };
@@ -140,6 +140,8 @@ export function VectorProperties() {
                   <option value="arrow">Flecha</option>
                   <option value="dot">Punto</option>
                   <option value="triangle">Triángulo</option>
+                  <option value="semicircle">Semicircunferencia</option>
+                  <option value="curve">Curva</option>
                 </select>
                 <p className="text-xs text-muted-foreground mt-1 font-mono opacity-70">Tipo de vector</p>
               </div>
@@ -199,9 +201,7 @@ export function VectorProperties() {
           <div className="space-y-4">
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <label className="text-xs text-muted-foreground font-mono uppercase">Longitud
-                  <span className="ml-1 text-xs opacity-60">(2-50px)</span>
-                </label>
+                <label className="text-xs text-muted-foreground font-mono uppercase">Longitud</label>
                 <span className="text-xs font-mono">
                   {settings.vectorLength || 20}px
                 </span>
@@ -209,8 +209,8 @@ export function VectorProperties() {
               <div className="flex items-center gap-2 mt-1">
                 <input 
                   type="range"
-                  min="2" 
-                  max="50" 
+                  min="1" 
+                  max="200" 
                   value={settings.vectorLength || 20}
                   onChange={handleVectorLengthChange}
                   className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
@@ -218,8 +218,7 @@ export function VectorProperties() {
                 />
                 <input 
                   type="number" 
-                  min="2" 
-                  max="50" 
+                  min="1" 
                   value={settings.vectorLength || 20}
                   onChange={handleVectorLengthChange}
                   className="w-16 bg-muted text-foreground text-xs p-1 pl-2 pr-1 border border-input focus:outline-none font-mono appearance-auto"
@@ -230,9 +229,7 @@ export function VectorProperties() {
             
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <label className="text-xs text-muted-foreground font-mono uppercase">Grosor
-                  <span className="ml-1 text-xs opacity-60">(1-10px)</span>
-                </label>
+                <label className="text-xs text-muted-foreground font-mono uppercase">Grosor</label>
                 <span className="text-xs font-mono">
                   {settings.vectorStrokeWidth || 1}px
                 </span>
@@ -240,8 +237,8 @@ export function VectorProperties() {
               <div className="flex items-center gap-2 mt-1">
                 <input 
                   type="range"
-                  min="1" 
-                  max="10" 
+                  min="0.1" 
+                  max="30" 
                   step="0.5"
                   value={settings.vectorStrokeWidth || 1}
                   onChange={(e) => {
@@ -254,8 +251,7 @@ export function VectorProperties() {
                 />
                 <input 
                   type="number" 
-                  min="1" 
-                  max="10" 
+                  min="0.1" 
                   step="0.5"
                   value={settings.vectorStrokeWidth || 1}
                   onChange={(e) => {

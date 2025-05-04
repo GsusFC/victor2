@@ -3,7 +3,7 @@
  */
 
 // Tipos base
-export type VectorShape = 'line' | 'arrow' | 'dot' | 'triangle';
+export type VectorShape = 'line' | 'arrow' | 'dot' | 'triangle' | 'semicircle' | 'curve';
 export type LineCap = 'butt' | 'round' | 'square'; // Definición de LineCap
 // Actualizar para incluir todos los ratios de lib/constants.ts y el control
 export type AspectRatio = '1:1' | '16:9' | '4:3' | '3:2' | '9:16' | '2:1' | 'free';
@@ -34,7 +34,10 @@ export const VALID_ANIMATION_TYPES = [
   'expandingWave',
   'cellularAutomata',
   'flocking',
-  'vortex'
+  'vortex',
+  'geometricPattern',
+  'followPath',
+  'lissajous'
 ] as const;
 
 export type ValidAnimationType = typeof VALID_ANIMATION_TYPES[number];
@@ -51,7 +54,10 @@ export type AnimationType =
   | 'expandingWave'
   | 'cellularAutomata'
   | 'flocking'
-  | 'vortex';
+  | 'vortex'
+  | 'geometricPattern'
+  | 'followPath'
+  | 'lissajous';
 
 export function isValidAnimationType(value: string): value is AnimationType {
   return VALID_ANIMATION_TYPES.includes(value as ValidAnimationType);
@@ -59,7 +65,7 @@ export function isValidAnimationType(value: string): value is AnimationType {
 
 // Helper para validar VectorShape
 export const isValidVectorShape = (shape: unknown): shape is VectorShape => {
-  return ['line', 'arrow', 'dot', 'triangle'].includes(shape as string);
+  return ['line', 'arrow', 'dot', 'triangle', 'semicircle', 'curve'].includes(shape as string);
 };
 
 // Configuración base
@@ -98,6 +104,27 @@ export interface AnimationVectorSettings extends BaseVectorSettings {
   mouseAttractionRadius: number;
   mouseAttractionStrength: number;
   pulseDuration: number;
+  
+  // Parámetros para patrón geométrico
+  geometricPatternSize: number;
+  geometricPatternComplexity: number;
+  geometricPatternRotationSpeed: number;
+  
+  // Parámetros para vórtice/remolino
+  vortexStrength: number;
+  vortexCenterX: number; // Posición X del centro del vórtice (porcentaje)
+  vortexCenterY: number; // Posición Y del centro del vórtice (porcentaje)
+  
+  // Parámetros para seguir camino
+  followPathComplexity: number;
+  followPathSpeed: number;
+  followPathVariation: number;
+  
+  // Parámetros para Lissajous
+  lissajousParamA: number;
+  lissajousParamB: number;
+  lissajousFrequency: number;
+  lissajousDelta: number; // Diferencia de fase
 }
 
 // Tipos de configuración

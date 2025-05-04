@@ -51,7 +51,11 @@ export function AnimationControls() {
               { value: 'rippleEffect', label: 'Ondulaciones' },
               { value: 'expandingWave', label: 'Onda Expansiva' },
               { value: 'cellularAutomata', label: 'Autómata Celular' },
-              { value: 'flocking', label: 'Bandadas' }
+              { value: 'flocking', label: 'Bandadas' },
+              { value: 'vortex', label: 'Vórtice' },
+              { value: 'geometricPattern', label: 'Patrón Geométrico' },
+              { value: 'followPath', label: 'Seguir Camino' },
+              { value: 'lissajous', label: 'Lissajous' }
             ].map(type => (
               <option key={type.value} value={type.value}>{type.label}</option>
             ))}
@@ -99,19 +103,246 @@ export function AnimationControls() {
         </CardHeader>
         <CardContent className="p-4 pt-2">
           <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-xs text-muted-foreground">RADIO DE INFLUENCIA</label>
-              <div className="flex items-center gap-2">
-                <input 
-                  type="number" 
-                  min="5" 
-                  max="50" 
-                  defaultValue="20"
-                  className="w-full bg-muted text-foreground text-xs p-2 border border-input focus:outline-none" 
-                />
-                <span className="text-xs">%</span>
+            {/* Controles para Vórtice */}
+            {settings.currentAnimationType === 'vortex' && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground">INTENSIDAD DEL VÓRTICE</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="range" 
+                      min="0.1" 
+                      max="2" 
+                      step="0.1" 
+                      value={settings.vortexStrength}
+                      onChange={(e) => setSettings({ vortexStrength: parseFloat(e.target.value) })}
+                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                    />
+                    <span className="text-xs w-8 text-right">{settings.vortexStrength.toFixed(1)}</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground">POSICIÓN X DEL CENTRO (%)</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="100" 
+                      step="1" 
+                      value={settings.vortexCenterX}
+                      onChange={(e) => setSettings({ vortexCenterX: parseInt(e.target.value) })}
+                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                    />
+                    <span className="text-xs w-8 text-right">{settings.vortexCenterX}</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground">POSICIÓN Y DEL CENTRO (%)</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="100" 
+                      step="1" 
+                      value={settings.vortexCenterY}
+                      onChange={(e) => setSettings({ vortexCenterY: parseInt(e.target.value) })}
+                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                    />
+                    <span className="text-xs w-8 text-right">{settings.vortexCenterY}</span>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Controles para Patrón Geométrico */}
+            {settings.currentAnimationType === 'geometricPattern' && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground">TAMAÑO DEL PATRÓN</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="range" 
+                      min="5" 
+                      max="50" 
+                      step="1" 
+                      value={settings.geometricPatternSize}
+                      onChange={(e) => setSettings({ geometricPatternSize: parseFloat(e.target.value) })}
+                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                    />
+                    <span className="text-xs w-8 text-right">{settings.geometricPatternSize}</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground">COMPLEJIDAD</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="range" 
+                      min="1" 
+                      max="10" 
+                      step="1" 
+                      value={settings.geometricPatternComplexity}
+                      onChange={(e) => setSettings({ geometricPatternComplexity: parseInt(e.target.value) })}
+                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                    />
+                    <span className="text-xs w-8 text-right">{settings.geometricPatternComplexity}</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground">VELOCIDAD DE ROTACIÓN</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="range" 
+                      min="0.1" 
+                      max="2" 
+                      step="0.1" 
+                      value={settings.geometricPatternRotationSpeed}
+                      onChange={(e) => setSettings({ geometricPatternRotationSpeed: parseFloat(e.target.value) })}
+                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                    />
+                    <span className="text-xs w-8 text-right">{settings.geometricPatternRotationSpeed.toFixed(1)}</span>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Controles para Seguir Camino */}
+            {settings.currentAnimationType === 'followPath' && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground">VELOCIDAD DEL CAMINO</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="range" 
+                      min="0.1" 
+                      max="2" 
+                      step="0.1" 
+                      value={settings.followPathSpeed}
+                      onChange={(e) => setSettings({ followPathSpeed: parseFloat(e.target.value) })}
+                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                    />
+                    <span className="text-xs w-8 text-right">{settings.followPathSpeed.toFixed(1)}</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground">COMPLEJIDAD DEL CAMINO</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="range" 
+                      min="1" 
+                      max="5" 
+                      step="1" 
+                      value={settings.followPathComplexity}
+                      onChange={(e) => setSettings({ followPathComplexity: parseInt(e.target.value) })}
+                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                    />
+                    <span className="text-xs w-8 text-right">{settings.followPathComplexity}</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground">VARIACIÓN</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="1" 
+                      step="0.1" 
+                      value={settings.followPathVariation}
+                      onChange={(e) => setSettings({ followPathVariation: parseFloat(e.target.value) })}
+                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                    />
+                    <span className="text-xs w-8 text-right">{settings.followPathVariation.toFixed(1)}</span>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Controles para Lissajous */}
+            {settings.currentAnimationType === 'lissajous' && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground">PARÁMETRO A</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="range" 
+                      min="1" 
+                      max="10" 
+                      step="1" 
+                      value={settings.lissajousParamA}
+                      onChange={(e) => setSettings({ lissajousParamA: parseInt(e.target.value) })}
+                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                    />
+                    <span className="text-xs w-8 text-right">{settings.lissajousParamA}</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground">PARÁMETRO B</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="range" 
+                      min="1" 
+                      max="10" 
+                      step="1" 
+                      value={settings.lissajousParamB}
+                      onChange={(e) => setSettings({ lissajousParamB: parseInt(e.target.value) })}
+                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                    />
+                    <span className="text-xs w-8 text-right">{settings.lissajousParamB}</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground">FRECUENCIA</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="range" 
+                      min="0.0001" 
+                      max="0.005" 
+                      step="0.0001" 
+                      value={settings.lissajousFrequency}
+                      onChange={(e) => setSettings({ lissajousFrequency: parseFloat(e.target.value) })}
+                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                    />
+                    <span className="text-xs w-8 text-right">{settings.lissajousFrequency.toFixed(4)}</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground">DIFERENCIA DE FASE (GRADOS)</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="360" 
+                      step="5" 
+                      value={Math.round((settings.lissajousDelta * 180 / Math.PI))}
+                      onChange={(e) => {
+                        const degrees = parseInt(e.target.value);
+                        const radians = degrees * Math.PI / 180;
+                        setSettings({ lissajousDelta: radians });
+                      }}
+                      className="w-full h-1.5 bg-muted rounded-sm appearance-none cursor-pointer" 
+                    />
+                    <span className="text-xs w-8 text-right">{Math.round((settings.lissajousDelta * 180 / Math.PI))}°</span>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Mantener el control original para otras animaciones */}
+            {!['vortex', 'geometricPattern', 'followPath', 'lissajous'].includes(settings.currentAnimationType) && (
+              <div className="space-y-2">
+                <label className="text-xs text-muted-foreground">RADIO DE INFLUENCIA</label>
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="number" 
+                    min="5" 
+                    max="50" 
+                    value={settings.mouseAttractionRadius}
+                    onChange={(e) => setSettings({ mouseAttractionRadius: parseInt(e.target.value) })}
+                    className="w-full bg-muted text-foreground text-xs p-2 border border-input focus:outline-none" 
+                  />
+                  <span className="text-xs">%</span>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </CardContent>
       </Card>

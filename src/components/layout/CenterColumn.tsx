@@ -10,7 +10,7 @@ export function CenterColumn({ children }: CenterColumnProps) {
       <div className="p-2 border-b border-border">
         <h2 className="text-sm font-mono tracking-tight px-2">VISUALIZACIÓN</h2>
       </div>
-      <div className="flex-1 overflow-hidden flex items-center justify-center bg-black">
+      <div className="flex-1 overflow-hidden flex items-center justify-center bg-black w-full h-full">
         {children}
       </div>
     </div>

@@ -173,6 +173,30 @@ export function AnimatedVectorCanvas() {
               vectorElement.setAttribute('stroke-width', `${settings.vectorStrokeWidth}`);
               vectorElement.setAttribute('stroke-linecap', settings.vectorLineCap);
               break;
+
+            case 'semicircle':
+              // Semicircunferencia
+              vectorElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+              const radius = settings.vectorLength / 2;
+              // SVG path para un semicírculo: M(inicio) A(arco) L(línea a)
+              vectorElement.setAttribute('d', `M ${x},${y} A ${radius},${radius} 0 0,1 ${x + settings.vectorLength},${y} L ${x},${y}`);
+              vectorElement.setAttribute('fill', 'none');
+              vectorElement.setAttribute('stroke', settings.vectorColor);
+              vectorElement.setAttribute('stroke-width', `${settings.vectorStrokeWidth}`);
+              vectorElement.setAttribute('stroke-linecap', settings.vectorLineCap);
+              break;
+              
+            case 'curve':
+              // Curva Bézier cuadrática
+              vectorElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+              // SVG path para una curva cuadrática: M(inicio) Q(control, fin)
+              const controlY = y - settings.vectorLength * 0.3; // Punto de control más alto para crear el arco
+              vectorElement.setAttribute('d', `M ${x},${y} Q ${x + settings.vectorLength/2},${controlY} ${x + settings.vectorLength},${y}`);
+              vectorElement.setAttribute('fill', 'none');
+              vectorElement.setAttribute('stroke', settings.vectorColor);
+              vectorElement.setAttribute('stroke-width', `${settings.vectorStrokeWidth}`);
+              vectorElement.setAttribute('stroke-linecap', settings.vectorLineCap);
+              break;
               
             default:
               // Por defecto, una línea
@@ -183,8 +207,9 @@ export function AnimatedVectorCanvas() {
               vectorElement.setAttribute('y2', `${y}`);
           }
           
-          // Atributos comunes a todos los elementos (excepto algunos específicos)
+          // Atributos comunes a todos los elementos
           vectorElement.setAttribute('id', id);
+          vectorElement.setAttribute('data-shape', vectorShape); // Guardar la forma como atributo data-
           
           // Aplicar atributos de trazo solo a los elementos que lo requieren
           if (vectorShape !== 'dot') {
@@ -387,13 +412,47 @@ export function AnimatedVectorCanvas() {
         const easedAngle = currentAngle + (targetAngle - currentAngle) * settings.easingFactor;
         
         vectorElement.setAttribute('data-angle', easedAngle.toString());
+        
+        // Obtener la forma del vector desde data-shape (añadido durante creación)
+        const shape = vectorElement.getAttribute('data-shape') || 'line';
+        
+        // Aplicar transformaciones según el tipo de forma
         vectorElement.setAttribute('transform', `rotate(${easedAngle}, ${x}, ${y})`);
         
         // Aplicar variabilidad de grosor si está activada
         if (settings.isStrokeVariabilityActive) {
           const variationFactor = 0.5 + Math.abs(Math.sin(timeFactor * 0.2 + (r + c) * 0.1)) * 0.5;
           const variedStrokeWidth = settings.vectorStrokeWidth * variationFactor;
-          vectorElement.setAttribute('stroke-width', variedStrokeWidth.toString());
+          
+          // Aplicar variabilidad de grosor según el tipo de forma
+          if (shape === 'arrow') {
+            // Para flechas, aplicar a los elementos hijos
+            const arrowLine = vectorElement.querySelector('line');
+            if (arrowLine) {
+              arrowLine.setAttribute('stroke-width', variedStrokeWidth.toString());
+            }
+          } else if (shape === 'semicircle' || shape === 'curve') {
+            // Para formas basadas en path, aplicar directamente
+            vectorElement.setAttribute('stroke-width', variedStrokeWidth.toString());
+            // Ajustar suavemente la forma del path para darle más dinamismo
+            if (shape === 'curve') {
+              const currentPath = vectorElement.getAttribute('d') || '';
+              const parts = currentPath.split(' ');
+              if (parts.length >= 6) {
+                // Ajustar ligeramente el punto de control
+                const baseX = parseFloat(parts[1]);
+                const baseY = parseFloat(parts[2]);
+                const endX = parseFloat(parts[5]);
+                const endY = parseFloat(parts[6]);
+                const controlX = (baseX + endX) / 2;
+                const controlY = baseY - settings.vectorLength * (0.3 + Math.sin(timeFactor * 0.5) * 0.05);
+                vectorElement.setAttribute('d', `M ${baseX},${baseY} Q ${controlX},${controlY} ${endX},${endY}`);
+              }
+            }
+          } else if (shape !== 'dot') {
+            // Para todas las demás formas excepto puntos
+            vectorElement.setAttribute('stroke-width', variedStrokeWidth.toString());
+          }
         }
       }
     }

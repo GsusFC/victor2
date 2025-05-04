@@ -1,5 +1,8 @@
 import type { AspectRatio } from '@/components/vector/core/types';
 
+// Constante para el padding del canvas (marco de respeto)
+export const CANVAS_PADDING = 50; // 50px de padding en todos los lados
+
 // Tipos para las opciones de Aspect Ratio
 export interface AspectRatioOption {
   value: AspectRatio;

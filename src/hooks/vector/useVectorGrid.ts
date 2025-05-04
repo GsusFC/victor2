@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import type { ExtendedVectorItem } from '@/components/vector/core/vectorTypes';
 import type { VectorSettings } from '@/components/vector/core/types';
+import { CANVAS_PADDING } from '@/lib/constants';
 
 interface UseVectorGridProps {
   dimensions: { width: number; height: number };
@@ -42,14 +43,15 @@ export const useVectorGrid = ({
     // Validación de valores como en el original
     const gridRows = settings.gridRows !== undefined && settings.gridRows >= 3 ? settings.gridRows : 10;
     
-    // Usar directamente las dimensiones reales del canvas
-    const canvasHeight = height;
-    const canvasWidth = width;
+    // Calcular dimensiones efectivas del área de dibujo considerando el marco de respeto (padding)
+    // Dejamos un margen interno para que los vectores no toquen el borde del canvas
+    const effectiveWidth = width - (CANVAS_PADDING * 0.4);
+    const effectiveHeight = height - (CANVAS_PADDING * 0.4);
     
     // Calcular el espaciado real para una distribución uniforme
-    const actualSpacingY = canvasHeight / (gridRows);
-    const gridCols = Math.floor(canvasWidth / actualSpacingY);
-    const actualSpacingX = canvasWidth / (gridCols);
+    const actualSpacingY = effectiveHeight / gridRows;
+    const gridCols = Math.floor(effectiveWidth / actualSpacingY);
+    const actualSpacingX = effectiveWidth / gridCols;
     
     // Usar los valores calculados para determinar el centro
     console.log(`Grid: ${gridRows}x${gridCols}, SpacingX: ${actualSpacingX}, SpacingY: ${actualSpacingY}`);
@@ -59,8 +61,8 @@ export const useVectorGrid = ({
     const centerRowIndex = Math.floor((gridRows - 1) / 2);
 
     
-    // Actualizar valores calculados en el store con las dimensiones reales
-    setCalculatedValues(gridCols, canvasWidth, canvasHeight);
+    // Actualizar valores calculados en el store con las dimensiones efectivas
+    setCalculatedValues(gridCols, effectiveWidth, effectiveHeight);
     
     // Crear un array de vectores con posiciones iniciales
     const vectors: ExtendedVectorItem[] = [];
@@ -70,6 +72,7 @@ export const useVectorGrid = ({
 
       for (let c = 0; c < gridCols; c++) {
         // Posición base usando el espaciado real calculado
+        // No añadimos el padding aquí porque el viewBox del SVG ya está ajustado con el padding
         const baseX = (c + 0.5) * actualSpacingX;
         const baseY = (r + 0.5) * actualSpacingY;
         

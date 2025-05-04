@@ -128,6 +128,125 @@ export const useVectorAnimation = (settings: VectorSettings) => {
         return flockAngle + individualVariation;
       }
 
+      case 'geometricPattern': {
+        // Patrón geométrico basado en posiciones relativas
+        const complexity = settings.geometricPatternComplexity || 3;
+        const rotationSpeed = settings.geometricPatternRotationSpeed || 0.5;
+        
+        // Calcular la posición relativa al centro (normalizando a [-1, 1])
+        const centerX = dimensions.width / 2;
+        const centerY = dimensions.height / 2;
+        const relX = (vector.baseX - centerX) / (dimensions.width / 2);
+        const relY = (vector.baseY - centerY) / (dimensions.height / 2);
+        
+        // Convertir a coordenadas polares
+        const radius = Math.sqrt(relX * relX + relY * relY);
+        const theta = Math.atan2(relY, relX);
+        
+        // Aplicar transformaciones geométricas según complejidad
+        // Para complejidad = 1, tendremos un patrón circular simple
+        // Para complejidad > 1, añadimos armónicos
+        let angle = (theta * (180 / Math.PI)) + (timestamp * rotationSpeed * 0.01);
+        
+        // Añadir patrones geométricos basados en la complejidad
+        for (let i = 1; i <= complexity; i++) {
+          angle += 20 * Math.sin(i * theta + timestamp * 0.001 * i) * (1 - radius);
+        }
+        
+        return angle % 360;
+      }
+      
+      case 'vortex': {
+        // Efecto remolino/vórtice
+        const vortexStrength = settings.vortexStrength || 0.3;
+        
+        // Obtener el centro del vórtice (por defecto el centro del canvas)
+        const vortexCenterXPercent = settings.vortexCenterX !== undefined ? settings.vortexCenterX : 50;
+        const vortexCenterYPercent = settings.vortexCenterY !== undefined ? settings.vortexCenterY : 50;
+        
+        // Convertir porcentajes a coordenadas reales
+        const vortexCenterX = (vortexCenterXPercent / 100) * dimensions.width;
+        const vortexCenterY = (vortexCenterYPercent / 100) * dimensions.height;
+        
+        // Calcular la distancia al centro del vórtice
+        const dx = vector.baseX - vortexCenterX;
+        const dy = vector.baseY - vortexCenterY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Calcular el ángulo base (perpendicular al radio)
+        const baseAngle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+        
+        // La velocidad del remolino disminuye con la distancia
+        const speedFactor = Math.max(0.1, 1 - (distance / Math.max(dimensions.width, dimensions.height)));
+        const rotationAmount = timestamp * 0.01 * vortexStrength * speedFactor;
+        
+        return (baseAngle + rotationAmount) % 360;
+      }
+      
+      case 'followPath': {
+        // Seguir un camino generado proceduralmente
+        const pathSpeed = settings.followPathSpeed || 0.5;
+        const pathComplexity = settings.followPathComplexity || 2;
+        const pathVariation = settings.followPathVariation || 0.3;
+        
+        // Usamos posiciones normalizadas para calcular el ángulo del camino
+        const normalizedX = vector.baseX / dimensions.width;
+        const normalizedY = vector.baseY / dimensions.height;
+        
+        // Generar caminos usando funciones trigonometricas combinadas
+        let angle = 0;
+        
+        // Componente base que avanza con el tiempo
+        const timeComponent = timestamp * 0.001 * pathSpeed;
+        
+        // Añadir diferentes armónicos basados en la posición del vector
+        for (let i = 1; i <= pathComplexity; i++) {
+          // Cada armónico tiene una frecuencia y fase diferentes
+          const freq = i * 2;
+          angle += 40 * Math.sin(freq * normalizedX * Math.PI + timeComponent);
+          angle += 40 * Math.cos(freq * normalizedY * Math.PI + timeComponent * 0.7);
+          
+          // Añadir variaciones adicionales basadas en la posición
+          if (pathVariation > 0) {
+            angle += 20 * pathVariation * Math.sin(normalizedX * normalizedY * 10 + timeComponent * i);
+          }
+        }
+        
+        return angle % 360;
+      }
+      
+      case 'lissajous': {
+        // Figuras de Lissajous
+        const paramA = settings.lissajousParamA || 3;
+        const paramB = settings.lissajousParamB || 2;
+        const frequency = settings.lissajousFrequency || 0.001;
+        const delta = settings.lissajousDelta || Math.PI / 2; // 90 grados por defecto
+        
+        // Normalizar las coordenadas del vector al rango [-1, 1]
+        const centerX = dimensions.width / 2;
+        const centerY = dimensions.height / 2;
+        const normalizedX = (vector.baseX - centerX) / centerX;
+        const normalizedY = (vector.baseY - centerY) / centerY;
+        
+        // Calcular el parámetro t para este vector, basado en su posición
+        // Usamos la posición angular del vector en el sistema de coordenadas normalizado
+        const positionAngle = Math.atan2(normalizedY, normalizedX);
+        const distance = Math.sqrt(normalizedX * normalizedX + normalizedY * normalizedY);
+        
+        // Parámetro de tiempo, avanza con timestamp pero varía por posición
+        const t = timestamp * frequency + positionAngle + distance;
+        
+        // Ecuaciones paramétricas de las curvas de Lissajous
+        // x = A * sin(a * t + δ), y = B * sin(b * t)
+        const lissajousX = Math.sin(paramA * t + delta);
+        const lissajousY = Math.sin(paramB * t);
+        
+        // Convertir a un ángulo
+        const angle = Math.atan2(lissajousY, lissajousX) * (180 / Math.PI);
+        
+        return angle;
+      }
+
       default:
         return vector.currentAngle;
     }

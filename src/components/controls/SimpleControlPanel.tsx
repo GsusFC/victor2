@@ -233,6 +233,8 @@ export function SimpleControlPanel({ onExportClick }: SimpleControlPanelProps) {
               <option value="arrow">Flecha</option>
               <option value="dot">Punto</option>
               <option value="triangle">Triángulo</option>
+              <option value="semicircle">Semicircunferencia</option>
+              <option value="curve">Curva</option>
             </select>
           </div>
           

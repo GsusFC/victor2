@@ -43,8 +43,8 @@ export function AspectRatioControl() {
   };
 
   return (
-    <div className="flex items-center justify-center space-x-2 mt-3">
-      <span className="text-xs text-gray-500">Relación de aspecto:</span>
+    <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 flex items-center justify-center space-x-2 bg-black/70 p-2 rounded-lg shadow-lg z-50">
+      <span className="text-xs text-white">Relación de aspecto:</span>
       <div className="flex space-x-1">
         {aspectRatioOptions.map(option => (
           <button
@@ -54,8 +54,8 @@ export function AspectRatioControl() {
               handleAspectRatioChange(option.value);
             }}
             className={`pointer-events-auto px-2 py-1 text-xs rounded transition-colors flex items-center ${
-              aspectRatio === option.value // Usar la variable seleccionada
-                ? 'bg-gray-800 text-white border border-gray-600'
+              aspectRatio === option.value 
+                ? 'bg-primary text-white border border-primary'
                 : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
             }`}
             title={option.title}

@@ -39,7 +39,28 @@ export const defaultAnimationSettings: Omit<AnimationVectorSettings, keyof BaseV
   perlinNoiseSpeed: 0.002,
   mouseAttractionRadius: 100,
   mouseAttractionStrength: 1,
-  pulseDuration: 2000
+  pulseDuration: 2000,
+  
+  // Valores por defecto para patrones geométricos
+  geometricPatternSize: 30,
+  geometricPatternComplexity: 3,
+  geometricPatternRotationSpeed: 0.5,
+  
+  // Valores por defecto para vórtice/remolino
+  vortexStrength: 0.3,
+  vortexCenterX: 50, // Centro (50%)
+  vortexCenterY: 50, // Centro (50%)
+  
+  // Valores por defecto para seguir camino
+  followPathComplexity: 2,
+  followPathSpeed: 0.5,
+  followPathVariation: 0.3,
+  
+  // Valores por defecto para Lissajous
+  lissajousParamA: 3,
+  lissajousParamB: 2,
+  lissajousFrequency: 0.001,
+  lissajousDelta: Math.PI / 2 // 90 grados en radianes
 };
 
 // Valores por defecto para configuración básica
@@ -49,7 +70,7 @@ export const defaultBaseSettings: BaseVectorSettings = {
   vectorSpacing: 30,
   gridRows: 10,
   vectorColor: '#ffffff',
-  vectorShape: 'line' as VectorShape,
+  vectorShape: 'semicircle' as VectorShape,
   strokeLinecap: 'round' as LineCap,
   animationSpeed: 1,
   backgroundColor: '#000000',
@@ -190,7 +211,7 @@ const createVectorStore = () => create<VectorStore>()(persist(
         // Sobrescribir solo las partes del estado que deben persistir
         if (pState.settings) {
           // Validar vectorShape
-          const validShapes: VectorShape[] = ['line', 'arrow', 'dot', 'triangle'];
+          const validShapes: VectorShape[] = ['line', 'arrow', 'dot', 'triangle', 'semicircle', 'curve'];
           if (!validShapes.includes(pState.settings.vectorShape)) {
             console.warn(`Invalid persisted vectorShape '${pState.settings.vectorShape}', resetting to '${defaultSettings.vectorShape}'.`);
             draft.settings.vectorShape = defaultSettings.vectorShape;
