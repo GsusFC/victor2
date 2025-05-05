@@ -129,7 +129,7 @@ export const useVectorAnimation = (settings: VectorSettings) => {
       }
 
       case 'geometricPattern': {
-        // Patrón geométrico basado en posiciones relativas
+        // Patrón geométrico basado en formas poligonales
         const complexity = settings.geometricPatternComplexity || 3;
         const rotationSpeed = settings.geometricPatternRotationSpeed || 0.5;
         
@@ -148,23 +148,35 @@ export const useVectorAnimation = (settings: VectorSettings) => {
         const radius = Math.sqrt(relX * relX + relY * relY) || 0; // Protección contra NaN
         const theta = Math.atan2(relY, relX) || 0; // Protección contra NaN
         
-        // Aplicar transformaciones geométricas según complejidad
-        // Para complejidad = 1, tendremos un patrón circular simple
-        // Para complejidad > 1, añadimos armónicos
-        let angle = (theta * (180 / Math.PI)) + (timestamp * rotationSpeed * 0.01);
+        // NUEVO: Crear patrones de polígonos regulares
+        // El número de lados del polígono depende de la complejidad
+        const sides = complexity + 2; // Mínimo un triángulo (complejidad=1 -> 3 lados)
         
-        // Añadir patrones geométricos basados en la complejidad
-        for (let i = 1; i <= complexity; i++) {
-          angle += 20 * Math.sin(i * theta + timestamp * 0.001 * i) * (1 - radius);
-        }
+        // Calcular el ángulo del lado del polígono más cercano
+        const sectorAngle = (2 * Math.PI) / sides;
+        const sectorNumber = Math.floor((theta + Math.PI) / sectorAngle);
+        const sectorMidAngle = sectorNumber * sectorAngle - Math.PI + (sectorAngle / 2);
+        
+        // No necesitamos calcular la distancia angular al sector para este patrón
+        
+        // Ángulo base: perpendicular a los lados del polígono
+        let angle = (sectorMidAngle + Math.PI/2) * (180 / Math.PI);
+        
+        // Añadir rotación global
+        angle += timestamp * rotationSpeed * 0.01;
+        
+        // Añadir efecto pulsante basado en la distancia al centro
+        const pulseEffect = 30 * Math.sin(timestamp * 0.002) * radius;
+        angle += pulseEffect;
         
         // Asegurar que el valor es numérico
         return isNaN(angle) ? (vector.currentAngle || 0) : (angle % 360);
       }
       
       case 'vortex': {
-        // Efecto remolino/vórtice
+        // Efecto remolino/vórtice claramente distinto a los demás patrones
         const vortexStrength = settings.vortexStrength || 0.3;
+        const vortexInwardFactor = settings.vortexInwardFactor || 0.5; // Factor de atracción hacia el centro
         
         // Verificar que las dimensiones son válidas para evitar NaN
         if (!dimensions || !dimensions.width || !dimensions.height) {
@@ -182,23 +194,33 @@ export const useVectorAnimation = (settings: VectorSettings) => {
         // Calcular la distancia al centro del vórtice
         const dx = vector.baseX - vortexCenterX;
         const dy = vector.baseY - vortexCenterY;
-        const distance = Math.sqrt(dx * dx + dy * dy) || 0; // Protección contra NaN
+        const distance = Math.sqrt(dx * dx + dy * dy) || 0.1; // Protección contra NaN/división por cero
         
-        // Calcular el ángulo base (perpendicular al radio)
-        const baseAngle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+        // NUEVO: Calcular ángulo hacia el centro del vórtice
+        const angleToCenter = Math.atan2(dy, dx);
         
-        // La velocidad del remolino disminuye con la distancia
-        const maxDimension = Math.max(dimensions.width || 1, dimensions.height || 1); // Evitar divisiones por cero
-        const speedFactor = Math.max(0.1, 1 - (distance / maxDimension));
-        const rotationAmount = timestamp * 0.01 * vortexStrength * speedFactor;
+        // Ángulo tangencial (perpendicular al radio - modo clásico de vórtice)
+        const tangentialAngle = angleToCenter + Math.PI / 2;
         
-        // Asegurar que el valor es numérico
-        const finalAngle = (baseAngle + rotationAmount) % 360;
+        // NUEVO: Combinar ángulo tangencial con un componente que apunta hacia el centro
+        // El vortexInwardFactor controla cuánto los vectores apuntan hacia el centro vs. tangencialmente
+        const combinedAngle = tangentialAngle - vortexInwardFactor * (angleToCenter + Math.PI);
+        
+        // La velocidad de rotación disminuye con la distancia al cuadrado (más natural para un vórtice)
+        const maxDimension = Math.max(dimensions.width || 1, dimensions.height || 1);
+        const normalizedDistance = distance / maxDimension;
+        const speedFactor = Math.pow(Math.max(0.1, 1 - normalizedDistance), 2);
+        
+        // Aplicar efecto de rotación incrementado por la fuerza del vórtice
+        const rotationAmount = timestamp * 0.015 * vortexStrength * speedFactor;
+        
+        // Convertir a grados y normalizar
+        const finalAngle = (combinedAngle * (180 / Math.PI) + rotationAmount) % 360;
         return isNaN(finalAngle) ? (vector.currentAngle || 0) : finalAngle;
       }
       
       case 'followPath': {
-        // Seguir un camino generado proceduralmente
+        // Seguir un camino con patrón de onda sinusoidal claro y distintivo
         const pathSpeed = settings.followPathSpeed || 0.5;
         const pathComplexity = settings.followPathComplexity || 2;
         const pathVariation = settings.followPathVariation || 0.3;
@@ -208,40 +230,54 @@ export const useVectorAnimation = (settings: VectorSettings) => {
           return vector.currentAngle || 0; // Retornar ángulo actual si no hay dimensiones válidas
         }
         
-        // Usamos posiciones normalizadas para calcular el ángulo del camino
-        const normalizedX = vector.baseX / (dimensions.width || 1); // Evitar división por cero
-        const normalizedY = vector.baseY / (dimensions.height || 1); // Evitar división por cero
+        // NUEVO: Definir un camino global como una serie de ondas sinusoidales
+        // La posición y punto de referencia dependen de la posición en el eje X
+        const pathCenterY = dimensions.height / 2;
+        const pathAmplitude = dimensions.height * 0.25;
         
-        // Generar caminos usando funciones trigonometricas combinadas
-        let angle = 0;
+        // Frecuencia del camino basada en la complejidad
+        // Mayor complejidad = más ondulaciones en el camino
+        const waveFrequency = (pathComplexity / 100) * Math.PI * 2;
         
-        // Componente base que avanza con el tiempo
-        const timeComponent = timestamp * 0.001 * pathSpeed;
+        // Calcular la posición Y del camino en este punto X
+        const pathPhase = timestamp * 0.001 * pathSpeed;
+        const pathY = pathCenterY + pathAmplitude * Math.sin(vector.baseX * waveFrequency + pathPhase);
         
-        // Añadir diferentes armónicos basados en la posición del vector
-        for (let i = 1; i <= pathComplexity; i++) {
-          // Cada armónico tiene una frecuencia y fase diferentes
-          const freq = i * 2;
-          // Protecciones contra NaN en operaciones trigonométricas
-          const sinValue = Math.sin(freq * normalizedX * Math.PI + timeComponent) || 0;
-          const cosValue = Math.cos(freq * normalizedY * Math.PI + timeComponent * 0.7) || 0;
+        // Calcular la distancia vertical al camino
+        const distanceToPathY = Math.abs(vector.baseY - pathY);
+        
+        // Umbral de influencia: cuanto más cerca estemos del camino, más nos afecta
+        const influenceThreshold = dimensions.height * 0.3;
+        const influenceFactor = Math.max(0, 1 - (distanceToPathY / influenceThreshold));
+        
+        // Si estamos cerca del camino, seguimos la dirección de la tangente del camino
+        if (influenceFactor > 0) {
+          // Calcular la pendiente del camino en este punto (derivada de la función seno)
+          const pathSlope = pathAmplitude * waveFrequency * Math.cos(vector.baseX * waveFrequency + pathPhase);
           
-          angle += 40 * sinValue;
-          angle += 40 * cosValue;
+          // Convertir pendiente a ángulo (en grados)
+          const pathDirection = Math.atan(pathSlope) * (180 / Math.PI);
           
-          // Añadir variaciones adicionales basadas en la posición
-          if (pathVariation > 0) {
-            const additionalSinValue = Math.sin(normalizedX * normalizedY * 10 + timeComponent * i) || 0;
-            angle += 20 * pathVariation * additionalSinValue;
-          }
+          // Ajustar dirección según la posición respecto al camino (arriba/abajo)
+          const verticalCorrection = vector.baseY < pathY ? 180 : 0;
+          
+          // Añadir variación basada en la distancia y configuración
+          const variationAmount = 40 * pathVariation * (1 - influenceFactor) * Math.sin(timestamp * 0.002);
+          
+          // Combinar dirección base del camino, corrección vertical y variación
+          const finalAngle = (pathDirection + verticalCorrection + variationAmount) % 360;
+          return isNaN(finalAngle) ? (vector.currentAngle || 0) : finalAngle;
+        } else {
+          // Si estamos lejos del camino, comportamiento más libre
+          // Rotación lenta basada en la posición
+          const positionFactor = (vector.baseX / dimensions.width) * (vector.baseY / dimensions.height);
+          const rotationAmount = timestamp * 0.0005 * (1 + positionFactor * 2);
+          return (vector.currentAngle + rotationAmount) % 360;
         }
-        
-        // Asegurar que el valor es numérico
-        return isNaN(angle) ? (vector.currentAngle || 0) : (angle % 360);
       }
       
       case 'lissajous': {
-        // Figuras de Lissajous
+        // Figuras de Lissajous claramente distintivas
         const paramA = settings.lissajousParamA || 3;
         const paramB = settings.lissajousParamB || 2;
         const frequency = settings.lissajousFrequency || 0.001;
@@ -252,30 +288,58 @@ export const useVectorAnimation = (settings: VectorSettings) => {
           return vector.currentAngle || 0; // Retornar ángulo actual si no hay dimensiones válidas
         }
         
-        // Normalizar las coordenadas del vector al rango [-1, 1]
+        // NUEVO: Implementar verdaderas curvas de Lissajous
+        // En lugar de calcular el ángulo basado en la posición actual del vector,
+        // calculamos la posición objetivo donde debería estar y apuntamos hacia allí
+        
+        // Centro de la figura de Lissajous
         const centerX = dimensions.width / 2;
         const centerY = dimensions.height / 2;
-        const normalizedX = (vector.baseX - centerX) / (centerX || 1); // Evitar división por cero
-        const normalizedY = (vector.baseY - centerY) / (centerY || 1); // Evitar división por cero
         
-        // Calcular el parámetro t para este vector, basado en su posición
-        // Usamos la posición angular del vector en el sistema de coordenadas normalizado
-        const positionAngle = Math.atan2(normalizedY, normalizedX) || 0; // Protección contra NaN
-        const distance = Math.sqrt(normalizedX * normalizedX + normalizedY * normalizedY) || 0; // Protección contra NaN
+        // Tamaño de la figura (proporcional al canvas)
+        const figureSize = Math.min(dimensions.width, dimensions.height) * 0.4;
         
-        // Parámetro de tiempo, avanza con timestamp pero varía por posición
-        const t = timestamp * frequency + positionAngle + distance;
+        // Parámetro t avanza con el tiempo, pero es diferente para cada vector
+        // basado en su distancia al centro y ángulo
+        const normalizedX = (vector.baseX - centerX) / (centerX || 1);
+        const normalizedY = (vector.baseY - centerY) / (centerY || 1);
+        const radius = Math.sqrt(normalizedX * normalizedX + normalizedY * normalizedY);
+        const angle = Math.atan2(normalizedY, normalizedX);
         
-        // Ecuaciones paramétricas de las curvas de Lissajous
-        // x = A * sin(a * t + δ), y = B * sin(b * t)
-        const lissajousX = Math.sin(paramA * t + delta) || 0; // Protección contra NaN
-        const lissajousY = Math.sin(paramB * t) || 0; // Protección contra NaN
+        // Parámetro temporal que avanza con velocidad proporcional a la frecuencia
+        const t = timestamp * frequency;
         
-        // Convertir a un ángulo
-        const angle = Math.atan2(lissajousY, lissajousX) * (180 / Math.PI);
+        // Posición objetivo según las ecuaciones paramétricas de Lissajous
+        // En vez de usar la posición actual para calcular el t, usamos el tiempo global
+        // pero calculamos diferentes puntos objetivo para cada sector del canvas
+        
+        // Dividimos el círculo en sectores y asignamos diferentes fases
+        const numSectors = 4;
+        const sectorIndex = Math.floor((angle + Math.PI) / (2 * Math.PI / numSectors));
+        const sectorPhase = sectorIndex * Math.PI / 2;
+        
+        // Calculamos el punto objetivo de la curva de Lissajous
+        const targetX = centerX + figureSize * Math.sin(paramA * (t + sectorPhase) + delta);
+        const targetY = centerY + figureSize * Math.sin(paramB * (t + sectorPhase));
+        
+        // Vector desde la posición actual hacia el punto objetivo
+        const vectorToTargetX = targetX - vector.baseX;
+        const vectorToTargetY = targetY - vector.baseY;
+        
+        // Ángulo hacia el objetivo (en grados)
+        const angleToTarget = Math.atan2(vectorToTargetY, vectorToTargetX) * (180 / Math.PI);
+        
+        // Mezclar el ángulo hacia el objetivo con una rotación
+        // basada en la distancia para crear un patrón más dinámico
+        const distanceFactor = Math.min(1, radius * 2); // Normalizado entre 0 y 1
+        const rotationComponent = (t * 100) % 360 * distanceFactor;
+        
+        // Combinación ponderada: cerca del objetivo seguimos la dirección del objetivo,
+        // lejos añadimos más rotación
+        const finalAngle = angleToTarget + rotationComponent * (1 - Math.max(0, 1 - distanceFactor));
         
         // Asegurar que el valor es numérico
-        return isNaN(angle) ? (vector.currentAngle || 0) : angle;
+        return isNaN(finalAngle) ? (vector.currentAngle || 0) : finalAngle;
       }
 
       default:
