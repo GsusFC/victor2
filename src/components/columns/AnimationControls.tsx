@@ -29,7 +29,7 @@ export function AnimationControls() {
     updateSetting('easingFactor', value);
   };
   return (
-    <div className="space-y-4 font-mono animation-controls">
+    <div className="space-y-2 font-mono animation-controls">
       <Card className="border-input">
         <CardHeader className="p-4 pb-2">
           <CardTitle className="text-xs font-mono font-medium tracking-wide">TIPO DE ANIMACIÓN</CardTitle>

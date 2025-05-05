@@ -3,6 +3,8 @@
 /* Estilos generales */
 .animation-controls {
   font-family: var(--font-mono);
+  --control-height: 1.5rem;
+  --compact-padding: 0.5rem;
 }
 
 /* Tarjetas */
