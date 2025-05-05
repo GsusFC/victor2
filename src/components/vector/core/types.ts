@@ -36,6 +36,8 @@ export const VALID_ANIMATION_TYPES = [
   'flocking',
   'vortex',
   'geometricPattern',
+  'geometrico',
+  'tangenteClasica',
   'followPath',
   'lissajous'
 ] as const;
@@ -56,6 +58,8 @@ export type AnimationType =
   | 'flocking'
   | 'vortex'
   | 'geometricPattern'
+  | 'geometrico'
+  | 'tangenteClasica'
   | 'followPath'
   | 'lissajous';
 

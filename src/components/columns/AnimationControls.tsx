@@ -98,7 +98,7 @@ export function AnimationControls() {
         </CardContent>
       </Card>
 
-      {['vortex', 'geometricPattern', 'followPath', 'lissajous', 'mouseInteraction'].includes(settings.currentAnimationType) && (
+      {['vortex', 'geometricPattern', 'followPath', 'lissajous', 'mouseInteraction'].includes(settings.currentAnimationType) && settings.currentAnimationType !== 'geometrico' && (
         <Card className="border-input">
           <CardHeader className="p-4 pb-2">
             <CardTitle className="text-xs">PARÁMETROS ESPECÍFICOS</CardTitle>
