@@ -90,7 +90,7 @@ const NewVectorCanvas: React.FC = () => {
       const aspectRatio = settings.aspectRatio;
       
       // Resultado: número de filas y columnas y espaciado ajustado
-      const rows = gridRows;
+      let rows = gridRows;
       let cols;
       
       // Calcular número de columnas y espaciado ajustado según la relación de aspecto
@@ -138,12 +138,28 @@ const NewVectorCanvas: React.FC = () => {
           break;
         }
         default: { // Formato libre
-          // Restar margen de seguridad al ancho disponible
+          // Restar margen de seguridad al ancho y alto disponibles
           const availableWidth = dimensions.width - (securityMargin * 2);
+          const availableHeight = dimensions.height - (securityMargin * 2);
           
-          // En formato libre, determinamos por el ancho disponible
-          cols = Math.floor(availableWidth / configSpacing);
-          adjustedSpacing = configSpacing;
+          // Calcular filas y columnas basadas en las dimensiones disponibles
+          // manteniendo la proporción del espaciado original
+          cols = Math.max(2, Math.floor(availableWidth / configSpacing));
+          
+          // Ajustar el número de filas para aprovechar la altura disponible
+          // en lugar de usar un valor fijo
+          const calculatedRows = Math.max(2, Math.floor(availableHeight / configSpacing));
+          if (calculatedRows !== rows) {
+            // Actualizar filas si es diferente al valor predeterminado
+            rows = calculatedRows;
+          }
+          
+          // Ajustar el espaciado para distribuir uniformemente en el espacio disponible
+          const horizontalSpacing = availableWidth / cols;
+          const verticalSpacing = availableHeight / rows;
+          
+          // Usar el menor de los dos espaciados para mantener uniformidad
+          adjustedSpacing = Math.min(horizontalSpacing, verticalSpacing);
           break;
         }
       }
