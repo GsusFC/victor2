@@ -27,8 +27,8 @@ export const useContainerDimensions = ({ containerRef, aspectRatio }: UseContain
    * Usamos dimensiones fijas para mantener proporciones exactas y mantener misma altura
    */
   const getContainerClasses = useCallback(() => {
-    // Clases base que se aplican siempre 
-    const baseClasses = "relative transition-all duration-300 ease-in-out shadow-lg rounded-lg overflow-hidden";
+    // Clases base que se aplican siempre - eliminado overflow-hidden para permitir que los vectores se extiendan fuera del contenedor
+    const baseClasses = "relative transition-all duration-300 ease-in-out shadow-lg rounded-lg";
     
     // Centrado horizontal para todos los formatos
     const containerClasses = "mx-auto";

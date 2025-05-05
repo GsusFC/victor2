@@ -93,8 +93,9 @@ const NewVectorCanvas: React.FC = () => {
       // Calcular número de columnas y espaciado ajustado según la relación de aspecto
       let adjustedSpacing;
       
-      // Añadir un margen de protección para evitar que los vectores se corten
-      const securityMargin = configSpacing;
+      // Añadir un margen de protección más agresivo, basado en la longitud completa del vector
+      // Se usa la longitud completa del vector + un 20% adicional para garantizar que nunca se corten
+      const securityMargin = Math.max(configSpacing, settings.vectorLength * 1.2);
       
       switch (aspectRatio) {
         case '1:1': { // Formato cuadrado
@@ -448,10 +449,18 @@ const NewVectorCanvas: React.FC = () => {
     <div className={getContainerClasses()} ref={containerRef}>
       <svg 
         ref={svgRef}
-        viewBox={`0 0 ${dimensions.width || 1067} ${dimensions.height || 600}`}
+        viewBox={`-50 -50 ${(dimensions.width || 1067) + 100} ${(dimensions.height || 600) + 100}`}
         preserveAspectRatio="xMidYMid meet"
-        className="w-full h-full bg-background"
+        className="w-full h-full"
+        style={{ overflow: 'visible' }}
       >
+        <rect 
+          x="0" 
+          y="0" 
+          width={dimensions.width || 1067} 
+          height={dimensions.height || 600} 
+          className="fill-background"
+        />
         <defs>
           <style>
             {`.dark svg line, .dark svg polygon, .dark svg circle { stroke: #FFFFFF !important; fill: #FFFFFF !important; }

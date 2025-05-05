@@ -98,14 +98,15 @@ export function AnimationControls() {
         </CardContent>
       </Card>
 
-      <Card className="border-input">
-        <CardHeader className="p-4 pb-2">
-          <CardTitle className="text-xs">PARÁMETROS ESPECÍFICOS</CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 pt-2">
-          <div className="space-y-4">
-            {/* Controles para Vórtice */}
-            {settings.currentAnimationType === 'vortex' && (
+      {['vortex', 'geometricPattern', 'followPath', 'lissajous', 'mouseInteraction'].includes(settings.currentAnimationType) && (
+        <Card className="border-input">
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-xs">PARÁMETROS ESPECÍFICOS</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-2">
+            <div className="space-y-4">
+              {/* Controles para Vórtice */}
+              {settings.currentAnimationType === 'vortex' && (
               <>
                 <div className="space-y-2">
                   <label className="text-xs text-muted-foreground">INTENSIDAD DEL VÓRTICE</label>
@@ -328,7 +329,7 @@ export function AnimationControls() {
             )}
 
             {/* Mantener el control original para otras animaciones */}
-            {!['vortex', 'geometricPattern', 'followPath', 'lissajous'].includes(settings.currentAnimationType) && (
+            {settings.currentAnimationType === 'mouseInteraction' && (
               <div className="space-y-2">
                 <label className="text-xs text-muted-foreground">RADIO DE INFLUENCIA</label>
                 <div className="flex items-center gap-2">
@@ -347,6 +348,7 @@ export function AnimationControls() {
           </div>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }
