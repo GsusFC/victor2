@@ -304,116 +304,9 @@ export function calculateAngle_ExpandingWave(
   }
 }
 
-export function calculateAngle_MouseInteraction(
-  baseX: number,
-  baseY: number,
-  timeFactor: number,
-  logicalWidth: number,
-  logicalHeight: number,
-  mouseX: number | null,
-  mouseY: number | null,
-  mouseInteractionRadiusPercent: number
-): number {
-  const interactionRadius = logicalWidth * (mouseInteractionRadiusPercent / 100);
-  const interactionRadiusSq = interactionRadius * interactionRadius;
-  
-  if (mouseX !== null && mouseY !== null) {
-    const dx = mouseX - baseX;
-    const dy = mouseY - baseY;
-    const distSq = dx * dx + dy * dy;
-    
-    if (distSq < interactionRadiusSq) {
-      const angleRadians = Math.atan2(dy, dx);
-      return angleRadians * (180 / Math.PI);
-    } else {
-      return calculateAngle_SmoothWaves(baseX, baseY, timeFactor, logicalWidth, logicalHeight);
-    }
-  } else {
-    return calculateAngle_SmoothWaves(baseX, baseY, timeFactor, logicalWidth, logicalHeight);
-  }
-}
-
-export function calculateAngle_CellularAutomata(
-  r: number,
-  c: number,
-  currentAngle: number,
-  timeFactor: number,
-  svgLines: VectorItem[],
-  vectorGridMap: Map<string, number>,
-  gridRows: number,
-  calculatedGridCols: number,
-  logicalWidth: number,
-  logicalHeight: number
-): number {
-  let neighborAnglesSum = 0;
-  let validNeighbors = 0;
-  const neighbors = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
-  
-  neighbors.forEach(([dr, dc]) => {
-    const nr = r + dr;
-    const nc = c + dc;
-    const neighborIndex = vectorGridMap.get(`${nr}-${nc}`);
-    
-    if (neighborIndex !== undefined && nr >= 0 && nr < gridRows && nc >= 0 && nc < calculatedGridCols) {
-      const neighbor = svgLines[neighborIndex];
-      if (neighbor) {
-        let diff = neighbor.currentAngle - currentAngle;
-        while (diff <= -180) diff += 360;
-        while (diff > 180) diff -= 360;
-        neighborAnglesSum += (currentAngle + diff);
-        validNeighbors++;
-      }
-    }
-  });
-  
-  let avgNeighborAngle = currentAngle;
-  if (validNeighbors > 0) {
-    avgNeighborAngle = neighborAnglesSum / validNeighbors;
-  }
-  
-  const currentItem = svgLines[vectorGridMap.get(`${r}-${c}`) || 0];
-  const baseWaveAngle = calculateAngle_SmoothWaves(
-    currentItem.baseX,
-    currentItem.baseY,
-    timeFactor * 0.1,
-    logicalWidth,
-    logicalHeight
-  );
-  
-  const blendFactor = 0.8;
-  let diffBlend = avgNeighborAngle - baseWaveAngle;
-  while (diffBlend <= -180) diffBlend += 360;
-  while (diffBlend > 180) diffBlend -= 360;
-  const finalAngle = baseWaveAngle + diffBlend * blendFactor;
-  
-  return finalAngle;
-}
-
-export function calculateAngle_Lissajous(
-  x: number,
-  y: number,
-  timeFactor: number,
-  svgLines: VectorItem[]
-): number {
-  const A = 400;
-  const B = 400;
-  const a = 3;
-  const b = 2;
-  const delta = Math.PI / 2;
-  const targetX = A * Math.sin(a * timeFactor * 2 + delta);
-  const targetY = B * Math.sin(b * timeFactor * 2);
-  const relativeX = (x % (A * 2)) - A;
-  const relativeY = (y % (B * 2)) - B;
-  const dx = targetX - relativeX;
-  const dy = targetY - relativeY;
-  
-  if (Math.hypot(dx, dy) < 1) {
-    const currentItem = svgLines.find(item => item.baseX === x && item.baseY === y);
-    return currentItem ? currentItem.currentAngle : 90;
-  }
-  
-  return Math.atan2(dy, dx) * (180 / Math.PI);
-}
+// Función eliminada por causar problemas de seguimiento al ratón
+// export function calculateAngle_Lissajous() {...}
+// Ahora se usa la implementación en useVectorAnimation.ts
 
 export function calculateAngle_PerlinFlow(
   x: number,
@@ -453,16 +346,25 @@ export function calculateAngle_Flocking(
   logicalHeight: number,
   flockMouseAttractionStrength: number = 0.2
 ): number {
-  const radius = flockNeighborhoodRadius;
-  const radiusSq = radius * radius;
-  const separationRadius = vectorSpacing * 1.5;
-  const separationRadiusSq = separationRadius * separationRadius;
+  // Añadir retorno temprano si no hay radius o grid definido para evitar errores
+  if (isNaN(flockNeighborhoodRadius) || flockNeighborhoodRadius <= 0) {
+    console.warn('Invalid flockNeighborhoodRadius, falling back to default angle');
+    return calculateAngle_SmoothWaves(x, y, timeFactor * 0.1, logicalWidth, logicalHeight);
+  }
+  
+  const radiusSq = flockNeighborhoodRadius * flockNeighborhoodRadius;
+  const separationRadiusSq = (vectorSpacing * 1.5) * (vectorSpacing * 1.5);
+  
+  // Retorno temprano si no hay vecinos cercanos para optimizar rendimiento
+  if (!svgLines || svgLines.length === 0) {
+    return calculateAngle_SmoothWaves(x, y, timeFactor * 0.1, logicalWidth, logicalHeight);
+  }
   
   let alignmentSumX = 0, alignmentSumY = 0, cohesionX = 0, cohesionY = 0;
   let separationSumX = 0, separationSumY = 0;
   let flockNeighborCount = 0, separationCount = 0;
   
-  const searchRadius = Math.ceil(radius / vectorSpacing);
+  const searchRadius = Math.ceil(flockNeighborhoodRadius / vectorSpacing);
   
   for (let nr = Math.max(0, r - searchRadius); nr < Math.min(gridRows, r + searchRadius + 1); nr++) {
     for (let nc = Math.max(0, c - searchRadius); nc < Math.min(calculatedGridCols, c + searchRadius + 1); nc++) {
@@ -472,6 +374,8 @@ export function calculateAngle_Flocking(
       if (neighborIndex === undefined) continue;
       
       const neighbor = svgLines[neighborIndex];
+      if (!neighbor) continue; // Añadir chequeo para null o undefined
+      
       const dx = neighbor.baseX - x;
       const dy = neighbor.baseY - y;
       const distSq = dx * dx + dy * dy;
@@ -543,4 +447,89 @@ export function calculateAngle_Flocking(
   while (targetAngle > 180) targetAngle -= 360;
   
   return targetAngle;
+}
+
+export function calculateAngle_CellularAutomata(
+  r: number,
+  c: number,
+  currentAngle: number,
+  timeFactor: number,
+  svgLines: VectorItem[],
+  vectorGridMap: Map<string, number>,
+  gridRows: number,
+  calculatedGridCols: number,
+  logicalWidth: number,
+  logicalHeight: number
+): number {
+  let neighborAnglesSum = 0;
+  let validNeighbors = 0;
+  const neighbors = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
+  
+  neighbors.forEach(([dr, dc]) => {
+    const nr = r + dr;
+    const nc = c + dc;
+    const neighborIndex = vectorGridMap.get(`${nr}-${nc}`);
+    
+    if (neighborIndex !== undefined && nr >= 0 && nr < gridRows && nc >= 0 && nc < calculatedGridCols) {
+      const neighbor = svgLines[neighborIndex];
+      if (neighbor) {
+        let diff = neighbor.currentAngle - currentAngle;
+        while (diff <= -180) diff += 360;
+        while (diff > 180) diff -= 360;
+        neighborAnglesSum += (currentAngle + diff);
+        validNeighbors++;
+      }
+    }
+  });
+  
+  let avgNeighborAngle = currentAngle;
+  if (validNeighbors > 0) {
+    avgNeighborAngle = neighborAnglesSum / validNeighbors;
+  }
+  
+  const currentItem = svgLines[vectorGridMap.get(`${r}-${c}`) || 0];
+  const baseWaveAngle = calculateAngle_SmoothWaves(
+    currentItem.baseX,
+    currentItem.baseY,
+    timeFactor * 0.1,
+    logicalWidth,
+    logicalHeight
+  );
+  
+  const blendFactor = 0.8;
+  let diffBlend = avgNeighborAngle - baseWaveAngle;
+  while (diffBlend <= -180) diffBlend += 360;
+  while (diffBlend > 180) diffBlend -= 360;
+  const finalAngle = baseWaveAngle + diffBlend * blendFactor;
+  
+  return finalAngle;
+}
+
+export function calculateAngle_MouseInteraction(
+  baseX: number,
+  baseY: number,
+  timeFactor: number,
+  logicalWidth: number,
+  logicalHeight: number,
+  mouseX: number | null,
+  mouseY: number | null,
+  mouseInteractionRadiusPercent: number
+): number {
+  const interactionRadius = logicalWidth * (mouseInteractionRadiusPercent / 100);
+  const interactionRadiusSq = interactionRadius * interactionRadius;
+  
+  if (mouseX !== null && mouseY !== null) {
+    const dx = mouseX - baseX;
+    const dy = mouseY - baseY;
+    const distSq = dx * dx + dy * dy;
+    
+    if (distSq < interactionRadiusSq) {
+      const angleRadians = Math.atan2(dy, dx);
+      return angleRadians * (180 / Math.PI);
+    } else {
+      return calculateAngle_SmoothWaves(baseX, baseY, timeFactor, logicalWidth, logicalHeight);
+    }
+  } else {
+    return calculateAngle_SmoothWaves(baseX, baseY, timeFactor, logicalWidth, logicalHeight);
+  }
 }

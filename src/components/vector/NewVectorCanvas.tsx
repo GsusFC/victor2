@@ -454,7 +454,8 @@ const NewVectorCanvas: React.FC = () => {
       >
         <defs>
           <style>
-            {`.dark svg line, .dark svg path, .dark svg polygon, .dark svg circle { stroke: #FFFFFF !important; fill: #FFFFFF !important; }`}
+            {`.dark svg line, .dark svg polygon, .dark svg circle { stroke: #FFFFFF !important; fill: #FFFFFF !important; }
+             .dark svg path { stroke: #FFFFFF !important; /* Removido fill para paths */ }`}
           </style>
         </defs>
         <g>

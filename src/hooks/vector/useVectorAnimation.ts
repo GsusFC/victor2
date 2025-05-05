@@ -25,8 +25,8 @@ export const useVectorAnimation = (settings: VectorSettings) => {
   ): number => {
     const { animationType } = settings;
 
-    // Si hay interacción con el ratón y está activada la atracción
-    if (mousePosition && settings.mouseAttraction) {
+    // Si hay interacción con el ratón y está activada la atracción, pero no para Lissajous
+    if (mousePosition && settings.mouseAttraction && animationType !== 'lissajous') {
       const vectorPosition = new Victor(vector.baseX, vector.baseY);
       const direction = mousePosition.clone().subtract(vectorPosition);
       return direction.angle() * (180 / Math.PI);
@@ -128,10 +128,45 @@ export const useVectorAnimation = (settings: VectorSettings) => {
         return flockAngle + individualVariation;
       }
 
+      case 'lissajous': {
+        // Figuras de Lissajous claramente distintivas
+        const paramA = settings.lissajousParamA || 3;
+        const paramB = settings.lissajousParamB || 2;
+        const frequency = settings.lissajousFrequency || 0.001;
+        const delta = settings.lissajousDelta || Math.PI / 2; // 90 grados por defecto
+
+        // Verificar que las dimensiones son válidas para evitar NaN
+        if (!dimensions || !dimensions.width || !dimensions.height) {
+          return vector.currentAngle || 0; // Retornar ángulo actual si no hay dimensiones válidas
+        }
+
+        // Centro de la figura de Lissajous
+        const centerX = dimensions.width / 2;
+        const centerY = dimensions.height / 2;
+
+        // Tamaño de la figura (proporcional al canvas)
+        const figureSize = Math.min(dimensions.width, dimensions.height) * 0.4;
+
+        // Parámetro temporal que avanza con velocidad proporcional a la frecuencia
+        const t = timestamp * frequency;
+
+        // Calculamos el punto objetivo de la curva de Lissajous
+        const targetX = centerX + figureSize * Math.sin(paramA * t + delta);
+        const targetY = centerY + figureSize * Math.sin(paramB * t);
+
+        // Vector desde la posición actual hacia el punto objetivo
+        const vectorToTargetX = targetX - vector.baseX;
+        const vectorToTargetY = targetY - vector.baseY;
+
+        // Ángulo hacia el objetivo (en grados)
+        return Math.atan2(vectorToTargetY, vectorToTargetX) * (180 / Math.PI);
+      }
+
       case 'geometricPattern': {
         // Patrón geométrico basado en formas poligonales
         const complexity = settings.geometricPatternComplexity || 3;
         const rotationSpeed = settings.geometricPatternRotationSpeed || 0.5;
+
         
         // Verificar que las dimensiones son válidas para evitar NaN
         if (!dimensions || !dimensions.width || !dimensions.height) {
