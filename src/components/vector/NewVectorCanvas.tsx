@@ -310,21 +310,87 @@ const NewVectorCanvas: React.FC = () => {
           }
           
           case 'centerPulse': {
-            const pulseIntervalValue = pulseInterval || 2000;
-            const pulseDurationValue = pulseDuration || 1000;
+            // Valores por defecto más apropiados para visualizar claramente el pulso
+            const pulseIntervalValue = pulseInterval || 3000; // Intervalo entre pulsos (3 segundos)
+            const pulseDurationValue = pulseDuration || 800;  // Duración del pulso (0.8 segundos)
+            
+            // Calcular tiempo desde el último pulso
             const timeSinceLastPulse = timestamp - lastPulseTimeRef.current;
             
+            // Resetear el pulso cuando se cumple el intervalo
+            // Esta lógica garantiza que el pulso se repita periódicamente
             if (timeSinceLastPulse >= pulseIntervalValue) {
+              console.log("¡Pulso central activado!");
               lastPulseTimeRef.current = timestamp;
               setLastPulseTime(timestamp);
             }
             
+            // Calculamos el centro del canvas
+            const center = new Victor(dimensions.width / 2, dimensions.height / 2);
+            const vectorPos = new Victor(item.baseX, item.baseY);
+            const direction = vectorPos.clone().subtract(center);
+            
+            // Ángulo desde el centro hacia el vector (dirección radial hacia afuera)
+            const radialOutwardAngle = direction.angle() * (180 / Math.PI) + 180;
+            
+            // Ángulo tangencial (perpendicular al radial)
+            const tangentialAngle = radialOutwardAngle + 90;
+            
+            // Distancia al centro (usada para efecto de propagación)
+            const distanceToCenter = direction.length();
+            const maxDistance = Math.sqrt(dimensions.width * dimensions.width + dimensions.height * dimensions.height) / 2;
+            const normalizedDistance = distanceToCenter / maxDistance; // 0.0 a 1.0
+            
+            // Cuando estamos dentro de la duración del pulso
             if (timeSinceLastPulse < pulseDurationValue) {
-              const center = new Victor(dimensions.width / 2, dimensions.height / 2);
-              const vectorPos = new Victor(item.baseX, item.baseY);
-              const direction = vectorPos.clone().subtract(center);
-              targetAngle = direction.angle() * (180 / Math.PI);
+              // Efecto de propagación: vectores más cercanos al centro reaccionan primero
+              // Velocidad de propagación: ajustar la velocidad de la onda
+              const propagationSpeed = 0.8; // Velocidad de la onda expansiva
+              
+              // Tiempo de retraso basado en la distancia al centro
+              const delay = normalizedDistance / propagationSpeed * pulseDurationValue;
+              
+              // Si la onda ya alcanzó este vector
+              if (timeSinceLastPulse >= delay) {
+                // Momento exacto cuando la onda pasa por este vector
+                const wavePassProgress = (timeSinceLastPulse - delay) / (pulseDurationValue * 0.3);
+                
+                // Afecta solo al comienzo del paso de la onda (0.0 a 1.0, limitado a 1.0)
+                const waveEffect = Math.min(1.0, wavePassProgress);
+                
+                // Efecto de la onda: rotar hacia afuera y luego regresar
+                if (waveEffect < 1.0) {
+                  // Durante el paso de la onda, apuntar radialmente hacia afuera
+                  targetAngle = radialOutwardAngle;
+                } else {
+                  // Después del paso inmediato, volver a un movimiento suave
+                  const idleRotation = Math.sin(timestamp * 0.0005 + item.baseX * 0.01) * 20;
+                  const positionVariation = (item.r + item.c) % 4 * 45;
+                  targetAngle = tangentialAngle + idleRotation + positionVariation * 0.2;
+                }
+              } else {
+                // Si la onda aún no ha llegado, mantener un movimiento suave
+                const idleRotation = Math.sin(timestamp * 0.0005 + item.baseX * 0.01) * 10;
+                targetAngle = tangentialAngle + idleRotation;
+              }
+              
+            } else {
+              // Cuando no hay pulso, aplicamos una rotación suave
+              // Calcular un ángulo que varíe con el tiempo (para evitar estaticidad)
+              const idleRotation = Math.sin(timestamp * 0.0005 + item.baseX * 0.01) * 20;
+              const positionVariation = (item.r + item.c) % 4 * 45;
+              targetAngle = tangentialAngle + idleRotation + positionVariation * 0.2;
             }
+            
+            // Efecto de oscilación adicional para todos los vectores justo después del pulso
+            if (timeSinceLastPulse >= pulseDurationValue && timeSinceLastPulse < pulseDurationValue + 300) {
+              const afterEffect = (timeSinceLastPulse - pulseDurationValue) / 300;
+              const wobbleIntensity = 25 * (1 - afterEffect);
+              const wobbleFrequency = 5;
+              const wobble = Math.sin(afterEffect * Math.PI * wobbleFrequency) * wobbleIntensity;
+              targetAngle += wobble;
+            }
+            
             break;
           }
           
@@ -381,6 +447,58 @@ const NewVectorCanvas: React.FC = () => {
             // Patrón basado en ondas polares
             targetAngle = (theta * (180 / Math.PI)) + 
                          (Math.cos(complexity * theta + timestamp * 0.001 * rotationSpeed) * 90 * radius);
+            break;
+          }
+          
+          case 'geometrico': {
+            // Versión simplificada del patrón geométrico - usamos la misma base pero solo con los controles básicos
+            const centerX = dimensions.width / 2;
+            const centerY = dimensions.height / 2;
+            
+            // Solo si tenemos dimensiones válidas
+            if (centerX > 0 && centerY > 0) {
+              // Convertir a ángulo polar - calculamos directamente el ángulo sin calcular el radio
+              const theta = Math.atan2(item.baseY - centerY, item.baseX - centerX);
+              
+              // Añadir 90 grados (π/2) para hacerlo tangencial
+              const baseAngle = theta + Math.PI/2;
+              
+              // Aplicar rotación basada en el tiempo usando el factor de velocidad
+              const speedFactor = settingsRef.current.animationSpeedFactor || 1;
+              const timeComponent = timestamp * 0.001 * 0.3 * speedFactor;
+              
+              // Calcular ángulo final
+              targetAngle = (baseAngle + timeComponent) * (180 / Math.PI);
+            } else {
+              // Si no tenemos dimensiones, mantener el ángulo actual
+              targetAngle = item.currentAngle || 0;
+            }
+            break;
+          }
+          
+          case 'tangenteClasica': {
+            // Implementación exacta del algoritmo original del HTML
+            const centerX = dimensions.width / 2;
+            const centerY = dimensions.height / 2;
+            
+            // Asegurarnos de tener dimensiones válidas
+            if (!centerX || !centerY) {
+              targetAngle = item.currentAngle || 0;
+              break;
+            }
+            
+            // Cálculo exactamente igual al del HTML original
+            const dx = item.baseX - centerX;
+            const dy = item.baseY - centerY;
+            const angleToCenter = Math.atan2(dy, dx);
+            let tangentialAngle = angleToCenter + Math.PI / 2; // Perpendicular a la línea hacia el centro
+            
+            // Velocidad de rotación fija como en el original (0.3)
+            const rotationSpeed = 0.3;
+            tangentialAngle += timestamp * 0.001 * rotationSpeed;
+            
+            // Convertir a grados como en el algoritmo original
+            targetAngle = tangentialAngle * (180 / Math.PI);
             break;
           }
           
@@ -459,12 +577,12 @@ const NewVectorCanvas: React.FC = () => {
           y="0" 
           width={dimensions.width || 1067} 
           height={dimensions.height || 600} 
-          className="fill-background"
+          fill="#000000"
+          data-component-name="NewVectorCanvas"
         />
         <defs>
           <style>
-            {`.dark svg line, .dark svg polygon, .dark svg circle { stroke: #FFFFFF !important; fill: #FFFFFF !important; }
-             .dark svg path { stroke: #FFFFFF !important; /* Removido fill para paths */ }`}
+            {`/* Estilos eliminados para permitir colores personalizados de vectores */`}
           </style>
         </defs>
         <g>
@@ -472,65 +590,58 @@ const NewVectorCanvas: React.FC = () => {
             const { currentAngle, baseX, baseY, lengthFactor = 1.0 } = item;
             
             // Calcular extremos del vector basados en el ángulo
-            const angleRad = currentAngle * (Math.PI / 180);
+            // No necesitamos calcular ángulos en radianes ya que todas las rotaciones ahora se aplican via SVG
             const actualLength = settingsRef.current.vectorLength * lengthFactor;
             
-            const endX = baseX + actualLength * Math.cos(angleRad);
-            const endY = baseY + actualLength * Math.sin(angleRad);
+            // Calcular offset de rotación relativo en el espacio del vector (siempre horizontal)
+            // Este enfoque unifica cómo se aplica la rotación para todos los tipos de vectores
+            let rotationOffsetX = 0; // Valor por defecto para 'start'
             
-            // Calcular punto de rotación según la configuración rotationOrigin
-            let rotationX, rotationY;
             switch (settingsRef.current.rotationOrigin) {
               case 'center':
-                // Punto medio
-                rotationX = baseX + (actualLength / 2) * Math.cos(angleRad);
-                rotationY = baseY + (actualLength / 2) * Math.sin(angleRad);
+                // Punto medio del vector
+                rotationOffsetX = actualLength / 2;
                 break;
               case 'end':
-                // Punto final
-                rotationX = endX;
-                rotationY = endY;
+                // Punto final del vector
+                rotationOffsetX = actualLength;
                 break;
               case 'start':
               default:
                 // Punto inicial (predeterminado)
-                rotationX = baseX;
-                rotationY = baseY;
+                rotationOffsetX = 0;
                 break;
             }
             
             // Renderizar según la forma seleccionada
             switch (settingsRef.current.vectorShape) {
               case 'arrow':
-                // Implementación flecha
+                // Implementación flecha utilizando sistema unificado de rotación
                 return (
-                  <g key={item.id} transform={`rotate(${currentAngle}, ${rotationX}, ${rotationY})`}>
+                  <g key={item.id} transform={`translate(${baseX}, ${baseY}) rotate(${currentAngle}, ${rotationOffsetX}, 0)`}>
                     <line 
-                      x1={baseX} 
-                      y1={baseY} 
-                      x2={baseX + actualLength - 5} 
-                      y2={baseY} 
+                      x1={0} 
+                      y1={0} 
+                      x2={actualLength - 5} 
+                      y2={0} 
                       stroke={settingsRef.current.vectorColor}
                       strokeWidth={settingsRef.current.vectorWidth}
                       strokeLinecap={settingsRef.current.vectorLineCap}
                     />
                     <polygon 
-                      points={`${baseX + actualLength},${baseY} ${baseX + actualLength - 5},${baseY - 2.5} ${baseX + actualLength - 5},${baseY + 2.5}`}
+                      points={`${actualLength},0 ${actualLength - 5},-2.5 ${actualLength - 5},2.5`}
                       fill={settingsRef.current.vectorColor}
                     />
                   </g>
                 );
                 
               case 'dot':
-                // Implementación punto - usar transformación para aplicar rotación
-                const dotCenterX = baseX + (actualLength/2) * Math.cos(angleRad);
-                const dotCenterY = baseY + (actualLength/2) * Math.sin(angleRad);
-                
+                // Implementación punto utilizando sistema unificado de rotación
                 return (
-                  <g key={item.id} transform={`rotate(${currentAngle}, ${rotationX}, ${rotationY})`}>
+                  <g key={item.id} transform={`translate(${baseX}, ${baseY}) rotate(${currentAngle}, ${rotationOffsetX}, 0)`}>
                     <circle
-                      cx={dotCenterX}
-                      cy={dotCenterY}
+                      cx={actualLength/2}
+                      cy={0}
                       r={settingsRef.current.vectorWidth * 2}
                       fill={settingsRef.current.vectorColor}
                     />
@@ -547,9 +658,9 @@ const NewVectorCanvas: React.FC = () => {
                 const p2X = actualLength * 0.4 * Math.cos(angle2);
                 const p2Y = actualLength * 0.4 * Math.sin(angle2);
                 
-                // Construir polígono en posición horizontal y luego rotar
+                // Construir polígono en posición horizontal y luego rotar usando el sistema unificado
                 return (
-                  <g key={item.id} transform={`translate(${baseX}, ${baseY}) rotate(${currentAngle}, ${rotationX - baseX}, ${rotationY - baseY})`}>
+                  <g key={item.id} transform={`translate(${baseX}, ${baseY}) rotate(${currentAngle}, ${rotationOffsetX}, 0)`}>
                     <polygon
                       points={`${tipX},0 ${p1X},${p1Y} ${p2X},${p2Y}`}
                       fill={settingsRef.current.vectorColor}
@@ -558,38 +669,38 @@ const NewVectorCanvas: React.FC = () => {
                 );
                 
               case 'semicircle':
-                // Implementación semicircunferencia
+                // Implementación semicircunferencia con el sistema unificado de rotación
                 const radius = actualLength / 2;
-                // Control points for the arc
-                const pathData = `
-                  M ${baseX} ${baseY}
-                  A ${radius} ${radius} 0 0 1 ${baseX + actualLength} ${baseY}
+                // Semicircunferencia centrada en el origen y rotada apropiadamente
+                const semicirclePath = `
+                  M 0 0
+                  A ${radius} ${radius} 0 0 1 ${actualLength} 0
                 `;
                 return (
-                  <path
-                    key={item.id}
-                    d={pathData}
-                    fill="none"
-                    stroke={settingsRef.current.vectorColor}
-                    strokeWidth={settingsRef.current.vectorWidth}
-                    strokeLinecap={settingsRef.current.vectorLineCap}
-                    transform={`rotate(${currentAngle}, ${rotationX}, ${rotationY})`}
-                  />
+                  <g key={item.id} transform={`translate(${baseX}, ${baseY}) rotate(${currentAngle}, ${rotationOffsetX}, 0)`}>
+                    <path
+                      d={semicirclePath}
+                      fill="none"
+                      stroke={settingsRef.current.vectorColor}
+                      strokeWidth={settingsRef.current.vectorWidth}
+                      strokeLinecap={settingsRef.current.vectorLineCap}
+                    />
+                  </g>
                 );
                 
               case 'curve':
-                // Implementar curva con transformación para rotación
+                // Implementar curva con transformación para rotación usando el sistema unificado
                 // Definir curva en posición horizontal (0 grados) y luego rotar
                 const curveHeight = actualLength * 0.3; // Altura de la curva = 30% de la longitud
                 
-                // Definir la curva relative a (0,0) y luego trasladar
+                // Definir la curva relativa a (0,0) y luego trasladar y rotar
                 const curvePath = `
                   M 0 0
                   Q ${actualLength/2} ${-curveHeight} ${actualLength} 0
                 `;
                 
                 return (
-                  <g key={item.id} transform={`translate(${baseX}, ${baseY}) rotate(${currentAngle}, ${rotationX - baseX}, ${rotationY - baseY})`}>
+                  <g key={item.id} transform={`translate(${baseX}, ${baseY}) rotate(${currentAngle}, ${rotationOffsetX}, 0)`}>
                     <path
                       d={curvePath}
                       fill="none"
@@ -601,14 +712,14 @@ const NewVectorCanvas: React.FC = () => {
                 );
                 
               default:
-                // Línea por defecto
+                // Línea por defecto utilizando el sistema unificado de rotación
                 return (
-                  <g key={item.id} transform={`rotate(${currentAngle}, ${rotationX}, ${rotationY})`}>
+                  <g key={item.id} transform={`translate(${baseX}, ${baseY}) rotate(${currentAngle}, ${rotationOffsetX}, 0)`}>
                     <line
-                      x1={baseX}
-                      y1={baseY}
-                      x2={baseX + actualLength} // Siempre horizontal, la rotación lo gira
-                      y2={baseY}
+                      x1={0}
+                      y1={0}
+                      x2={actualLength} // Siempre horizontal, la rotación lo gira
+                      y2={0}
                       stroke={settingsRef.current.vectorColor}
                       strokeWidth={settingsRef.current.vectorWidth}
                       strokeLinecap={settingsRef.current.vectorLineCap}
