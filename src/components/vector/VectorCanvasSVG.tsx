@@ -10,4 +10,5 @@ const VectorCanvasSVG: React.FC = () => {
   return <NewVectorCanvas />;
 };
 
-export default VectorCanvasSVG;
+// Exportamos con React.memo para evitar renderizados innecesarios
+export default React.memo(VectorCanvasSVG);

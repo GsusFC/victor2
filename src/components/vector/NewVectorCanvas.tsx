@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { useVectorStore } from '@/lib/store';
 import Victor from 'victor';
 import type { VectorSettings } from '@/components/vector/core/types';
@@ -32,11 +32,14 @@ const NewVectorCanvas: React.FC = () => {
   // Estado local (independiente de Zustand)
   const [vectorItems, setVectorItems] = useState<ExtendedVectorItem[]>([]);
   
-  // Usar hook de dimensiones para gestionar relaciones de aspecto
+  // Usando hook de dimensiones para gestionar relaciones de aspecto
   const { dimensions, getContainerClasses } = useContainerDimensions({
     containerRef,
     aspectRatio: settings.aspectRatio
   });
+  
+  // Memoizar las clases CSS del contenedor para evitar cálculos innecesarios
+  const containerClasses = useMemo(() => getContainerClasses(), [getContainerClasses]);
   
   // Actualizar referencia de settings cuando cambien
   useEffect(() => {
@@ -211,22 +214,27 @@ const NewVectorCanvas: React.FC = () => {
   }, [dimensions, settings, setVectorItems, setCalculatedValues, setSvgLines]);
   
   // Listener para eventos del ratón
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!containerRef.current) return;
-      
+  // Optimizado con useCallback para evitar recrear la función en cada renderizado
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-      
-      mouseRef.current = { x: mouseX, y: mouseY };
-    };
-    
-    document.addEventListener('mousemove', handleMouseMove);
-    return () => document.removeEventListener('mousemove', handleMouseMove);
+      mouseRef.current = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    }
   }, []);
   
-  // Efecto para gestionar la animación
+  // Efecto para añadir/quitar event listener
+  useEffect(() => {    
+    document.addEventListener('mousemove', handleMouseMove);
+    return () => document.removeEventListener('mousemove', handleMouseMove);
+  }, [handleMouseMove]); // Dependencia de la función memoizada
+  
+  // Variable para controlar la frecuencia de actualización del estado global
+  const lastUpdateTimeRef = useRef<number>(0);
+
+  // Efecto para gestionar la animación con optimizaciones de rendimiento
   useEffect(() => {
     // Función de animación
     const animate = () => {
@@ -537,10 +545,12 @@ const NewVectorCanvas: React.FC = () => {
       // Actualizar estado local SOLO cuando todos los cálculos estén hechos
       setVectorItems(updatedItems);
       
-      // Solo sincronizamos con el store cada 30 frames aproximadamente
-      // para evitar actualizaciones excesivas
-      if (Math.random() < 0.03) {
+      // Implementamos throttling basado en tiempo en lugar de aleatorio
+      // para mejorar la previsibilidad y el rendimiento
+      const currentTime = performance.now();
+      if (currentTime - lastUpdateTimeRef.current > 100) { // 100ms = 10 actualizaciones por segundo
         setSvgLines([...updatedItems]);
+        lastUpdateTimeRef.current = currentTime;
       }
       
       // Continuar animación si no está pausada
@@ -564,7 +574,7 @@ const NewVectorCanvas: React.FC = () => {
   
   // Renderizado
   return (
-    <div className={getContainerClasses()} ref={containerRef}>
+    <div className={containerClasses} ref={containerRef}>
       <svg 
         ref={svgRef}
         viewBox={`-50 -50 ${(dimensions.width || 1067) + 100} ${(dimensions.height || 600) + 100}`}
@@ -735,4 +745,6 @@ const NewVectorCanvas: React.FC = () => {
   );
 };
 
-export default NewVectorCanvas;
+// Exportamos usando React.memo para evitar renderizados innecesarios
+// cuando las props no cambian o cuando no son significativas para este componente
+export default React.memo(NewVectorCanvas);

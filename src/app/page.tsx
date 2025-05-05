@@ -58,8 +58,8 @@ export default function Home() {
       <ThreeColumnLayout
         leftContent={<AnimationControls />}
         centerContent={
-          <div className="w-full overflow-auto flex justify-center p-4">
-            {/* Contenedor con scroll horizontal para permitir que el canvas se muestre completo */}
+          <div className="w-full h-full flex justify-center items-center">
+            {/* Contenedor sin padding para maximizar espacio disponible */}
             <VectorCanvasSVG />
           </div>
         }
