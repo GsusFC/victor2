@@ -52,9 +52,9 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
   // Generar código SVG con useMemo para rendimiento
   const svgCode = useMemo(() => {
     const svgWidth = 800;
-    const svgHeight = svgWidth / (settings.aspectRatio === '1:1' ? 1 : settings.aspectRatio === '16:9' ? 16/9 : 2);
+    const svgHeight = svgWidth / (settings?.aspectRatio === '1:1' ? 1 : settings?.aspectRatio === '16:9' ? 16/9 : 2);
     
-    if (!svgLines || svgLines.length === 0) return '<!-- No hay líneas SVG para exportar -->';
+    if (!svgLines?.length || !settings) return '<!-- No hay datos suficientes para exportar -->';
 
     // Función centralizada para crear elementos SVG que captura la posición real
     const createSvgElement = (vector: ExtendedVectorItem): string => {
@@ -148,7 +148,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
   // Generar código JavaScript con useMemo para rendimiento
   const jsCode = useMemo(() => {
     // Crear un objeto de configuración para serializar a JSON
-    const settingsObj = {
+    const settingsObj = settings ? {
       gridRows: settings.gridRows,
       vectorSpacing: settings.vectorSpacing,
       vectorLength: settings.vectorLength,
@@ -158,15 +158,18 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
       animationType: settings.animationType,
       backgroundColor: settings.backgroundColor,
       aspectRatio: settings.aspectRatio
-    };
+    } : {};
     
     // Metadatos para el código
-    const config = {
+    const config = settings ? {
       rows: settings.gridRows,
       cols: gridCols,
       settings: settingsObj
-    };
+    } : {};
     
+    // Validación general
+    if (!settings || !svgLines) return '// Error: configuración incompleta';
+
     // Generar un esqueleto de código JS para animación
     return `// Vector Animation - Exportado desde VectorNext
 // ${new Date().toLocaleString()}
@@ -263,34 +266,205 @@ document.addEventListener('DOMContentLoaded', setup);
   // Generar código Framer Motion con useMemo para rendimiento
   const framerComponentCode = useMemo(() => {
     return `// VectorFramer.tsx - Componente Framer Motion para animación de vectores
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
 
 interface VectorFramerProps {
-  width?: number; // ancho en pixels
-  height?: number; // alto en pixels
+  width?: number;
+  height?: number;
   backgroundColor?: string;
+  rows?: number;
+  cols?: number;
+  spacing?: number;
+  shape?: string;
+  vectorColor?: string;
+  vectorStrokeWidth?: number;
+  animationType?: string;
+}
+
+// Utilidad para renderizar cada forma SVG según el tipo de vector
+function renderShape(vector: any, settings: any) {
+  const { id, shape, baseX, baseY, currentAngle, lengthFactor = 1.0 } = vector;
+  const actualLength = settings.vectorLength * (lengthFactor || 1.0);
+  const stroke = {
+    stroke: settings.vectorColor,
+    strokeWidth: settings.vectorStrokeWidth,
+    strokeLinecap: settings.strokeLinecap,
+    fill: "none",
+  };
+  const fillColor = settings.vectorColor;
+
+  // Calcular el offset de rotación basado en el punto de origen
+  const rotationOrigin = settings.rotationOrigin || 'center';
+  let rotationOffsetX = 0;
+  switch (rotationOrigin) {
+    case 'start':
+      rotationOffsetX = 0;
+      break;
+    case 'center':
+      rotationOffsetX = actualLength / 2;
+      break;
+    case 'end':
+      rotationOffsetX = actualLength;
+      break;
+  }
+  // Transformación SVG: translate + rotate
+  const transform = \`translate(\${baseX}, \${baseY}) rotate(\${currentAngle}, \${rotationOffsetX}, 0)\`;
+
+  switch (shape) {
+    case 'line':
+      return (
+        <line
+          key={id}
+          x1={0}
+          y1={0}
+          x2={actualLength}
+          y2={0}
+          {...stroke}
+          transform={transform}
+        />
+      );
+    case 'arrow': {
+      const arrowSize = actualLength * 0.25;
+      return (
+        <g key={id} transform={transform}>
+          <line
+            x1={0}
+            y1={0}
+            x2={actualLength}
+            y2={0}
+            {...stroke}
+          />
+          <polygon
+            points={\`\${actualLength},0 \${actualLength - arrowSize},\${-arrowSize / 2} \${actualLength - arrowSize},\${arrowSize / 2}\`}
+            fill={fillColor}
+          />
+        </g>
+      );
+    }
+    case 'dot': {
+      const dotRadius = actualLength * 0.15;
+      return (
+        <circle
+          key={id}
+          cx={actualLength / 2}
+          cy={0}
+          r={dotRadius}
+          fill={fillColor}
+          transform={transform}
+        />
+      );
+    }
+    case 'triangle': {
+      const tipX = actualLength;
+      const angle1 = Math.PI * 0.8;
+      const angle2 = -Math.PI * 0.8;
+      const p1X = actualLength * 0.4 * Math.cos(angle1);
+      const p1Y = actualLength * 0.4 * Math.sin(angle1);
+      const p2X = actualLength * 0.4 * Math.cos(angle2);
+      const p2Y = actualLength * 0.4 * Math.sin(angle2);
+      const points = \`\${tipX},0 \${p1X},\${p1Y} \${p2X},\${p2Y}\`;
+      return (
+        <polygon
+          key={id}
+          points={points}
+          fill={fillColor}
+          transform={transform}
+        />
+      );
+    }
+    case 'semicircle': {
+      const radius = actualLength / 2;
+      const semicirclePath = \`M 0 0 A \${radius} \${radius} 0 0 1 \${actualLength} 0\`;
+      return (
+        <path
+          key={id}
+          d={semicirclePath}
+          fill="none"
+          stroke={settings.vectorColor}
+          strokeWidth={settings.vectorStrokeWidth}
+          strokeLinecap={settings.strokeLinecap}
+          transform={transform}
+        />
+      );
+    }
+    case 'curve': {
+      const curveHeight = actualLength * 0.3;
+      const curvePath = \`M 0 0 Q \${actualLength / 2} \${-curveHeight} \${actualLength} 0\`;
+      return (
+        <path
+          key={id}
+          d={curvePath}
+          fill="none"
+          stroke={settings.vectorColor}
+          strokeWidth={settings.vectorStrokeWidth}
+          strokeLinecap={settings.strokeLinecap}
+          transform={transform}
+        />
+      );
+    }
+    default:
+      return (
+        <line
+          key={id}
+          x1={0}
+          y1={0}
+          x2={actualLength}
+          y2={0}
+          {...stroke}
+          transform={transform}
+        />
+      );
+  }
 }
 
 export const VectorFramer: React.FC<VectorFramerProps> = ({
   width = 800,
-  height = ${Math.round(800 / (settings.aspectRatio === '1:1' ? 1 : settings.aspectRatio === '16:9' ? 16/9 : 2))},
-  backgroundColor = "${settings.backgroundColor}"
+  height = 450,
+  backgroundColor = "#000000",
+  rows,
+  cols,
+  spacing,
+  shape,
+  vectorColor,
+  vectorStrokeWidth,
+  animationType
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  
-  // Variables de animación
+
   const animationSettings = {
-    type: "${settings.animationType}",
-    color: "${settings.vectorColor}",
-    shape: "${settings.vectorShape}",
-    rows: ${settings.gridRows},
-    cols: ${gridCols},
-    spacing: ${settings.vectorSpacing}
+    type: animationType || "smoothWaves",
+    color: vectorColor || "#FFFFFF",
+    shape: shape || "line",
+    rows: rows || 15,
+    cols: cols || 27,
+    spacing: spacing || 20,
+    vectorLength: 40,
+    vectorStrokeWidth: vectorStrokeWidth || 2,
+    strokeLinecap: "round",
+    rotationOrigin: "center"
   };
-  
+
+  // Si no se pasan los vectores desde fuera, los generamos dinámicamente
+  const vectors = Array.from({ length: animationSettings.rows * animationSettings.cols }).map((_, i) => {
+    const row = Math.floor(i / animationSettings.cols);
+    const col = i % animationSettings.cols;
+    return {
+      id: "v" + i,
+      shape: animationSettings.shape,
+      baseX: col * animationSettings.spacing,
+      baseY: row * animationSettings.spacing,
+      currentAngle: 0,
+      lengthFactor: 1
+    };
+  });
+
+  // Calcular el viewBox real basado en cols y rows y spacing
+  const svgViewBoxWidth = (cols || 27) * (spacing || 20);
+  const svgViewBoxHeight = (rows || 15) * (spacing || 20);
+
   return (
-    <div 
+    <div
       ref={containerRef}
       style={{
         width,
@@ -301,34 +475,47 @@ export const VectorFramer: React.FC<VectorFramerProps> = ({
         borderRadius: '8px'
       }}
     >
-      <svg width={width} height={height} viewBox="0 0 ${logicalWidth} ${logicalHeight}">
-        {/* Vectores animados */}
-        ${svgLines.slice(0, 5).map((vector, index) => `{/* Vector ${index + 1} */}
-        <motion.g
-          initial={{ rotate: 0 }}
-          animate={{ rotate: [0, 15, -15, 0] }}
-          transition={{
-            duration: 5,
-            repeat: Infinity,
-            repeatType: "reverse",
-            ease: "easeInOut",
-            delay: ${index} * 0.1
-          }}
-          style={{ transformOrigin: 'center' }}
-        >
-          {/* Forma: ${vector.shape} */}
-        </motion.g>`).join('\n        ')}
-        
-        {/* ... y ${svgLines.length - 5} vectores más */}
+      <svg width={width} height={height} viewBox={`0 0 ${svgViewBoxWidth} ${svgViewBoxHeight}`}>
+        {vectors.map((vector: any, index: number) => (
+          <motion.g
+            key={vector.id}
+            initial={{ rotate: 0 }}
+            animate={{
+              rotate:
+                (animationType || "smoothWaves") === "smoothWaves"
+                  ? [0, 15, -15, 0]
+                  : (animationType || "smoothWaves") === "perlinFlow"
+                  ? [0, 5, -5, 0]
+                  : [0, 90, 180, 270, 360]
+            }}
+            transition={{
+              duration: 5,
+              repeat: Infinity,
+              repeatType: "loop",
+              ease: "easeInOut",
+              delay: index * 0.05
+            }}
+          >
+            {renderShape(vector, animationSettings)}
+          </motion.g>
+        ))}
       </svg>
     </div>
   );
 };
 
 // Uso:
-// <VectorFramer />
+// <VectorFramer 
+//   rows={20} 
+//   cols={30} 
+//   spacing={24} 
+//   shape="arrow" 
+//   vectorColor="#00FFFF"
+//   vectorStrokeWidth={2}
+//   animationType="perlinFlow" 
+// />
 `;
-  }, [settings, gridCols, logicalWidth, logicalHeight, svgLines]);
+  }, [/* No dependencias para evitar recálculos innecesarios */]);
 
   // Estadísticas del código generado
   const codeStats = useMemo(() => {
