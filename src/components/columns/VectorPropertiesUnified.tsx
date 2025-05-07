@@ -273,7 +273,7 @@ export function VectorPropertiesUnified() {
                   
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs text-muted-foreground font-mono uppercase">Longitud Dinámica</label>
+                      <label className="text-xs text-muted-foreground font-mono uppercase">Grosor Dinámico</label>
                       <div className="relative inline-block w-8 h-4">
                         <input
                           type="checkbox"
@@ -297,7 +297,7 @@ export function VectorPropertiesUnified() {
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1 font-mono opacity-70">
-                      Permite que la longitud de los vectores varíe según su velocidad
+                      Los vectores varían su grosor según su velocidad de movimiento, creando un efecto de pincelada dinámica
                     </p>
                     
                     {settings.dynamicLengthEnabled && (
@@ -307,7 +307,7 @@ export function VectorPropertiesUnified() {
                           <input 
                             type="range" 
                             min="0.1" 
-                            max="1" 
+                            max="2" 
                             step="0.1" 
                             value={settings.dynamicLengthIntensity}
                             onChange={(e) => updateSetting('dynamicLengthIntensity', parseFloat(e.target.value))}

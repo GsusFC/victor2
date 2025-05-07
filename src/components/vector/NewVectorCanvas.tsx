@@ -585,11 +585,26 @@ const NewVectorCanvas: React.FC = () => {
         // Aplicar easing
         item.currentAngle = (item.currentAngle + angleDiff * easingFactor) % 360;
         
-        // Calcular longitud dinámica basada en velocidad angular
+        // Calcular grosor dinámico basado en velocidad angular con efecto amplificado
         if (dynamicLengthEnabled && item.previousAngle !== undefined) {
+          // Calcular velocidad angular con valor absoluto
           const angularVelocity = Math.abs(item.currentAngle - item.previousAngle);
-          item.lengthFactor = 1.0 + (angularVelocity * dynamicLengthIntensity / 10);
+          
+          // Definir un valor mínimo para garantizar que siempre haya algo de efecto visible
+          const minEffect = 0.05; 
+          
+          // Calcular el factor objetivo con amplificación (dividir por 2 en vez de 10)
+          const targetWidthFactor = 1.0 + Math.max(minEffect, angularVelocity * dynamicLengthIntensity / 2);
+          
+          // Aplicar suavizado para que los cambios no sean instantáneos
+          const prevWidthFactor = item.widthFactor || 1.0;
+          item.widthFactor = prevWidthFactor + (targetWidthFactor - prevWidthFactor) * 0.3; // Transición suave
+          
+          // Mantener longitud constante
+          item.lengthFactor = 1.0;
         } else {
+          // Reiniciar ambos factores cuando la funcionalidad está desactivada
+          item.widthFactor = 1.0;
           item.lengthFactor = 1.0;
         }
       });
@@ -656,7 +671,7 @@ const NewVectorCanvas: React.FC = () => {
         </defs>
         <g>
           {vectorItems.map(item => {
-            const { currentAngle, baseX, baseY, lengthFactor = 1.0 } = item;
+            const { currentAngle, baseX, baseY, lengthFactor = 1.0, widthFactor = 1.0 } = item;
             
             // Calcular extremos del vector basados en el ángulo
             // No necesitamos calcular ángulos en radianes ya que todas las rotaciones ahora se aplican via SVG
@@ -694,7 +709,7 @@ const NewVectorCanvas: React.FC = () => {
                       x2={actualLength - 5} 
                       y2={0} 
                       stroke={settingsRef.current.vectorColor}
-                      strokeWidth={settingsRef.current.vectorWidth}
+                      strokeWidth={settingsRef.current.vectorWidth * widthFactor}
                       strokeLinecap={settingsRef.current.vectorLineCap}
                     />
                     <polygon 
@@ -711,7 +726,7 @@ const NewVectorCanvas: React.FC = () => {
                     <circle
                       cx={actualLength/2}
                       cy={0}
-                      r={settingsRef.current.vectorWidth * 2}
+                      r={settingsRef.current.vectorWidth * 2 * widthFactor}
                       fill={settingsRef.current.vectorColor}
                     />
                   </g>
@@ -751,7 +766,7 @@ const NewVectorCanvas: React.FC = () => {
                       d={semicirclePath}
                       fill="none"
                       stroke={settingsRef.current.vectorColor}
-                      strokeWidth={settingsRef.current.vectorWidth}
+                      strokeWidth={settingsRef.current.vectorWidth * widthFactor}
                       strokeLinecap={settingsRef.current.vectorLineCap}
                     />
                   </g>
@@ -774,7 +789,7 @@ const NewVectorCanvas: React.FC = () => {
                       d={curvePath}
                       fill="none"
                       stroke={settingsRef.current.vectorColor}
-                      strokeWidth={settingsRef.current.vectorWidth}
+                      strokeWidth={settingsRef.current.vectorWidth * widthFactor}
                       strokeLinecap={settingsRef.current.vectorLineCap}
                     />
                   </g>
@@ -790,7 +805,7 @@ const NewVectorCanvas: React.FC = () => {
                       x2={actualLength} // Siempre horizontal, la rotación lo gira
                       y2={0}
                       stroke={settingsRef.current.vectorColor}
-                      strokeWidth={settingsRef.current.vectorWidth}
+                      strokeWidth={settingsRef.current.vectorWidth * widthFactor}
                       strokeLinecap={settingsRef.current.vectorLineCap}
                     />
                   </g>

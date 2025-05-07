@@ -78,7 +78,7 @@ export const defaultBaseSettings: BaseVectorSettings = {
   pulseInterval: 1000, // Valor por defecto para pulseInterval
   rotationOrigin: 'start' as RotationOrigin, // Nuevo valor por defecto
   dynamicLengthEnabled: false,
-  dynamicLengthIntensity: 0.5,
+  dynamicLengthIntensity: 0.7, // Aumentado para mayor efecto visual
 };
 
 // Configuración completa por defecto - SOLO SETTINGS
@@ -107,7 +107,7 @@ export const defaultSettings: VectorSettings = {
   pulseInterval: 1000,
   rotationOrigin: 'start',
   dynamicLengthEnabled: false,
-  dynamicLengthIntensity: 0.5,
+  dynamicLengthIntensity: 0.7, // Aumentado para mayor efecto visual
   
   // --- Propiedades de AnimationVectorSettings (excluyendo las ya en Base) --- 
   animationType: 'smoothWaves',
