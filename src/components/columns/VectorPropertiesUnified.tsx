@@ -119,32 +119,6 @@ export function VectorPropertiesUnified() {
                   
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <label className="text-xs text-muted-foreground font-mono uppercase">Aspecto</label>
-                    </div>
-                    <div className="flex justify-between mt-2">
-                      <button
-                        className={`text-xs py-1 px-3 font-mono ${settings.aspectRatio === '1:1' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
-                        onClick={() => updateSetting('aspectRatio', '1:1')}
-                      >
-                        1:1
-                      </button>
-                      <button
-                        className={`text-xs py-1 px-3 font-mono ${settings.aspectRatio === '2:1' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
-                        onClick={() => updateSetting('aspectRatio', '2:1')}
-                      >
-                        2:1
-                      </button>
-                      <button
-                        className={`text-xs py-1 px-3 font-mono ${settings.aspectRatio === '16:9' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
-                        onClick={() => updateSetting('aspectRatio', '16:9')}
-                      >
-                        16:9
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
                       <label className="text-xs text-muted-foreground font-mono uppercase">Color de Fondo</label>
                     </div>
                     <div className="flex items-center gap-2">

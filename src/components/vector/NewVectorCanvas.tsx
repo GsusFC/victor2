@@ -626,7 +626,14 @@ const NewVectorCanvas: React.FC = () => {
   
   // Renderizado
   return (
-    <div className={containerClasses} ref={containerRef}>
+    <div 
+      className={containerClasses} 
+      ref={containerRef}
+      style={{ 
+        backgroundColor: settingsRef.current.backgroundColor || '#000000',
+        transition: 'background-color 0.3s ease'
+      }}
+    >
       <svg 
         ref={svgRef}
         viewBox={`-50 -50 ${(dimensions.width || 1067) + 100} ${(dimensions.height || 600) + 100}`}
@@ -639,7 +646,7 @@ const NewVectorCanvas: React.FC = () => {
           y="0" 
           width={dimensions.width || 1067} 
           height={dimensions.height || 600} 
-          fill="#000000"
+          fill={settingsRef.current.backgroundColor || '#000000'}
           data-component-name="NewVectorCanvas"
         />
         <defs>
