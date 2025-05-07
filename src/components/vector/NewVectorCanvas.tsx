@@ -260,12 +260,20 @@ const NewVectorCanvas: React.FC = () => {
       const timestamp = Date.now();
       
       // Usar settingsRef para acceder a settings sin causar re-renders
+      const isPaused = settingsRef.current.isPaused;
       const { 
-        animationType, easingFactor, isPaused, 
+        animationType, easingFactor,
         dynamicLengthEnabled, dynamicLengthIntensity,
         seaWaveFrequency, seaWaveAmplitude, pulseInterval, pulseDuration,
         geometricPatternComplexity, geometricPatternRotationSpeed
       } = settingsRef.current;
+      
+      // Si la animación está pausada, no actualizamos nada
+      if (isPaused) {
+        // Programar el siguiente frame aunque estemos pausados
+        animationRef.current = requestAnimationFrame(animate);
+        return;
+      }
       
       // Creamos una nueva matriz de elementos en lugar de mutar los existentes
       const updatedItems = vectorItems.map(item => ({ ...item })); // Clonamos cada objeto
