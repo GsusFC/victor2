@@ -29,6 +29,9 @@ const NewVectorCanvas: React.FC = () => {
     (state) => state.actions
   );
   
+  // Acceder a togglePause desde actions
+  const togglePause = useVectorStore((state) => state.actions.togglePause);
+  
   // Estado local (independiente de Zustand)
   const [vectorItems, setVectorItems] = useState<ExtendedVectorItem[]>([]);
   
@@ -241,11 +244,36 @@ const NewVectorCanvas: React.FC = () => {
     }
   }, []);
   
+  // Manejar eventos de tecla para controlar la animación
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Pausar/reanudar con barra espaciadora
+    if (e.code === 'Space' && !e.repeat) {
+      // Solo si no se está escribiendo en inputs (ignora cuando el foco está en elementos de texto)
+      const activeElement = document.activeElement;
+      const isTextField = activeElement && 
+        (activeElement.tagName === 'INPUT' || 
+         activeElement.tagName === 'TEXTAREA' || 
+         (activeElement as HTMLElement).isContentEditable);
+      
+      if (!isTextField) {
+        e.preventDefault(); // Evitar scroll u otros comportamientos por defecto
+        // Pausar/reanudar la animación
+        togglePause();
+        console.log(`[KeyboardControl] ${settingsRef.current.isPaused ? 'Pausado' : 'Reanudado'} con barra espaciadora`);
+      }
+    }
+  }, [togglePause]);
+
   // Efecto para añadir/quitar event listener
   useEffect(() => {    
     document.addEventListener('mousemove', handleMouseMove);
-    return () => document.removeEventListener('mousemove', handleMouseMove);
-  }, [handleMouseMove]); // Dependencia de la función memoizada
+    document.addEventListener('keydown', handleKeyDown); // Agregar listener de teclado
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('keydown', handleKeyDown); // Quitar listener al desmontar
+    };
+  }, [handleMouseMove, handleKeyDown]); // Dependencia de la función memoizada
   
   // Variable para controlar la frecuencia de actualización del estado global
   const lastUpdateTimeRef = useRef<number>(0);
