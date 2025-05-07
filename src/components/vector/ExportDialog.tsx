@@ -280,6 +280,14 @@ interface VectorFramerProps {
   vectorColor?: string;
   vectorStrokeWidth?: number;
   animationType?: string;
+  // Parámetros para waterfall
+  waterfallTurbulence?: number;
+  waterfallTurbulenceSpeed?: number;
+  waterfallOffsetFactor?: number;
+  waterfallGravityCycle?: number;
+  waterfallGravityStrength?: number;
+  waterfallMaxStretch?: number;
+  waterfallDriftStrength?: number;
 }
 
 // Utilidad para renderizar cada forma SVG según el tipo de vector
@@ -428,7 +436,15 @@ export const VectorFramer: React.FC<VectorFramerProps> = ({
   shape,
   vectorColor,
   vectorStrokeWidth,
-  animationType
+  animationType,
+  // Parámetros para waterfall con valores por defecto
+  waterfallTurbulence = 15,
+  waterfallTurbulenceSpeed = 0.003,
+  waterfallOffsetFactor = 0.2,
+  waterfallGravityCycle = 2000,
+  waterfallGravityStrength = 0.5,
+  waterfallMaxStretch = 1.5,
+  waterfallDriftStrength = 0.2
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -442,7 +458,15 @@ export const VectorFramer: React.FC<VectorFramerProps> = ({
     vectorLength: 40,
     vectorStrokeWidth: vectorStrokeWidth || 2,
     strokeLinecap: "round",
-    rotationOrigin: "center"
+    rotationOrigin: "center",
+    // Parámetros específicos para waterfall
+    waterfallTurbulence,
+    waterfallTurbulenceSpeed,
+    waterfallOffsetFactor,
+    waterfallGravityCycle,
+    waterfallGravityStrength,
+    waterfallMaxStretch,
+    waterfallDriftStrength
   };
 
   // Si no se pasan los vectores desde fuera, los generamos dinámicamente
@@ -486,14 +510,25 @@ export const VectorFramer: React.FC<VectorFramerProps> = ({
                   ? [0, 15, -15, 0]
                   : (animationType || "smoothWaves") === "perlinFlow"
                   ? [0, 5, -5, 0]
+                  : (animationType || "smoothWaves") === "waterfall"
+                  ? [
+                      90,  // Posición inicial (caída vertical)
+                      90 + waterfallTurbulence * 0.5,  // Desviación derecha
+                      90 - waterfallTurbulence * 0.5,  // Desviación izquierda
+                      90   // Volver a la posición vertical
+                    ]
                   : [0, 90, 180, 270, 360]
             }}
             transition={{
-              duration: 5,
+              duration: (animationType || "smoothWaves") === "waterfall" 
+                ? 3 * (1 / (waterfallTurbulenceSpeed * 1000)) // Duración basada en la velocidad de turbulencia
+                : 5,
               repeat: Infinity,
               repeatType: "loop",
               ease: "easeInOut",
-              delay: index * 0.05
+              delay: (animationType || "smoothWaves") === "waterfall"
+                ? (vector.baseY / svgViewBoxHeight) * waterfallOffsetFactor * 5 // Efecto cascada: más rápido abajo
+                : index * 0.05
             }}
           >
             {renderShape(vector, animationSettings)}
@@ -512,7 +547,14 @@ export const VectorFramer: React.FC<VectorFramerProps> = ({
 //   shape="arrow" 
 //   vectorColor="#00FFFF"
 //   vectorStrokeWidth={2}
-//   animationType="perlinFlow" 
+//   animationType="waterfall" 
+//   waterfallTurbulence={15}
+//   waterfallTurbulenceSpeed={0.003}
+//   waterfallOffsetFactor={0.2}
+//   waterfallGravityCycle={2000}
+//   waterfallGravityStrength={0.5}
+//   waterfallMaxStretch={1.5}
+//   waterfallDriftStrength={0.2}
 // />
 `;
   }, [/* No dependencias para evitar recálculos innecesarios */]);

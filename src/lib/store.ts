@@ -52,7 +52,16 @@ export const defaultAnimationSettings: Omit<BaseVectorSettings, keyof BaseVector
   lissajousParamA: 3,
   lissajousParamB: 2,
   lissajousFrequency: 0.001,
-  lissajousDelta: Math.PI / 2 // 90 grados en radianes
+  lissajousDelta: Math.PI / 2, // 90 grados en radianes
+  
+  // Valores por defecto para waterfall (cascada)
+  waterfallTurbulence: 15, // Amplitud de la oscilación
+  waterfallTurbulenceSpeed: 0.003, // Velocidad de la turbulencia
+  waterfallOffsetFactor: 0.2, // Factor de desfase para la cascada
+  waterfallGravityCycle: 2000, // Duración del ciclo de gravedad en ms
+  waterfallGravityStrength: 0.5, // Intensidad del efecto de gravedad
+  waterfallMaxStretch: 1.5, // Estiramiento máximo de los vectores
+  waterfallDriftStrength: 0.2 // Intensidad de la deriva lateral
 };
 
 // Valores por defecto para configuración básica
@@ -134,6 +143,15 @@ export const defaultSettings: VectorSettings = {
   lissajousParamB: 2, 
   lissajousFrequency: 0.01, 
   lissajousDelta: Math.PI / 2, 
+  
+  // Valores por defecto para waterfall (cascada)
+  waterfallTurbulence: 15, 
+  waterfallTurbulenceSpeed: 0.003, 
+  waterfallOffsetFactor: 0.2, 
+  waterfallGravityCycle: 2000, 
+  waterfallGravityStrength: 0.5, 
+  waterfallMaxStretch: 1.5, 
+  waterfallDriftStrength: 0.2, 
   
   // --- Propiedad de VectorSettings --- 
   isPaused: false,

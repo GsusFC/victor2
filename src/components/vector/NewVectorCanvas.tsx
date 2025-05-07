@@ -562,6 +562,64 @@ const NewVectorCanvas: React.FC = () => {
             break;
           }
           
+          case 'waterfall': {
+            // Recuperar los parámetros de configuración para waterfall
+            const { 
+              waterfallTurbulence = 15, 
+              waterfallTurbulenceSpeed = 0.003, 
+              waterfallOffsetFactor = 0.2,
+              waterfallGravityCycle = 2000,
+              waterfallGravityStrength = 0.5,
+              waterfallMaxStretch = 1.5,
+              waterfallDriftStrength = 0.2
+            } = settingsRef.current;
+            
+            // Ángulo base: 90 grados - caída vertical hacia abajo
+            const baseAngle = 90;
+            
+            // Aplicar turbulencia sinusoidal horizontal
+            // - Usamos la posición X como desfase para crear un efecto ondulatorio
+            // - Utilizamos la posición Y para crear desfase en la cascada (más rápido abajo)
+            const horizontalOffset = Math.sin(
+              timestamp * waterfallTurbulenceSpeed + 
+              item.baseX * 0.05 + 
+              item.baseY * waterfallOffsetFactor
+            ) * waterfallTurbulence;
+            
+            // Efecto de gravedad pulsante - crea un efecto de aceleración periódica
+            // Esto afecta el factor de longitud para que los vectores se estiren más o menos
+            const gravityCycle = (timestamp % waterfallGravityCycle) / waterfallGravityCycle;
+            const gravityEffect = Math.sin(gravityCycle * Math.PI) * waterfallGravityStrength;
+            
+            // Deriva lateral basada en la posición - sutil efecto de corrientes laterales
+            const driftOffset = Math.sin(item.baseX * 0.01) * waterfallDriftStrength * 20;
+            
+            // Calcular ángulo final
+            targetAngle = baseAngle + horizontalOffset + driftOffset;
+            
+            // Modificar el factor de longitud para simular estiramiento por gravedad
+            // Solo modificamos la longitud si el ángulo está cerca de la vertical (90° ±30°)
+            const angleDeviation = Math.abs((targetAngle % 360) - 90);
+            if (angleDeviation < 30) {
+              // Normalizar la desviación a un valor entre 0 y 1 (0 = perfectamente vertical)
+              const normalizedDeviation = 1 - (angleDeviation / 30);
+              
+              // Calcular factor de estiramiento basado en gravedad y ciclo
+              // - Mayor gravedad = mayor estiramiento
+              // - Mayor cercanía a vertical = mayor estiramiento
+              const stretchFactor = 1 + (gravityEffect * normalizedDeviation * waterfallMaxStretch);
+              
+              // Aplicar el factor de longitud al vector
+              // Esto se usará en el renderizado para estirar el vector
+              item.lengthFactor = stretchFactor;
+            } else {
+              // Para vectores que no están cerca de la vertical, usar longitud normal
+              item.lengthFactor = 1.0;
+            }
+            
+            break;
+          }
+          
           // Otras animaciones se pueden añadir aquí
           default:
             // Si no se especifica un tipo de animación, usar mouseInteraction

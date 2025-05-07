@@ -39,7 +39,8 @@ export const VALID_ANIMATION_TYPES = [
   'geometrico',
   'tangenteClasica',
   'followPath',
-  'lissajous'
+  'lissajous',
+  'waterfall'
 ] as const;
 
 export type ValidAnimationType = typeof VALID_ANIMATION_TYPES[number];
@@ -61,7 +62,8 @@ export type AnimationType =
   | 'geometrico'
   | 'tangenteClasica'
   | 'followPath'
-  | 'lissajous';
+  | 'lissajous'
+  | 'waterfall';
 
 export function isValidAnimationType(value: string): value is AnimationType {
   return VALID_ANIMATION_TYPES.includes(value as ValidAnimationType);
@@ -175,6 +177,15 @@ export interface AnimationVectorSettings extends BaseVectorSettings {
   lissajousParamB: number;
   lissajousFrequency: number;
   lissajousDelta: number; // Diferencia de fase
+  
+  // Parámetros para waterfall (cascada)
+  waterfallTurbulence: number; // Amplitud de la oscilación
+  waterfallTurbulenceSpeed: number; // Velocidad de la turbulencia
+  waterfallOffsetFactor: number; // Factor de desfase para la cascada
+  waterfallGravityCycle: number; // Duración del ciclo de gravedad en ms
+  waterfallGravityStrength: number; // Intensidad del efecto de gravedad
+  waterfallMaxStretch: number; // Estiramiento máximo de los vectores
+  waterfallDriftStrength: number; // Intensidad de la deriva lateral
 }
 
 // Tipos de configuración
