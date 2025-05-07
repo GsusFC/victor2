@@ -278,8 +278,59 @@ export function AnimationControlsUnified() {
                     </div>
                   )}
 
+                  {/* Parámetros Patrón Geométrico */}
+                  {settings.currentAnimationType === 'geometricPattern' && (
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-xs text-muted-foreground">TAMAÑO</label>
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="range" 
+                            min="1" 
+                            max="10" 
+                            step="0.1" 
+                            value={settings.geometricPatternSize || 3}
+                            onChange={(e) => updateSetting('geometricPatternSize', parseFloat(e.target.value))}
+                            className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
+                          />
+                          <span className="text-xs w-8 text-right">{(settings.geometricPatternSize || 3).toFixed(1)}</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs text-muted-foreground">COMPLEJIDAD</label>
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="range" 
+                            min="1" 
+                            max="10" 
+                            step="1" 
+                            value={settings.geometricPatternComplexity || 3}
+                            onChange={(e) => updateSetting('geometricPatternComplexity', parseInt(e.target.value))}
+                            className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
+                          />
+                          <span className="text-xs w-8 text-right">{settings.geometricPatternComplexity || 3}</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs text-muted-foreground">VELOCIDAD DE ROTACIÓN</label>
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="range" 
+                            min="0.1" 
+                            max="3" 
+                            step="0.1" 
+                            value={settings.geometricPatternRotationSpeed || 0.5}
+                            onChange={(e) => updateSetting('geometricPatternRotationSpeed', parseFloat(e.target.value))}
+                            className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
+                          />
+                          <span className="text-xs w-8 text-right">{(settings.geometricPatternRotationSpeed || 0.5).toFixed(1)}</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
                   {/* Si no hay parámetros específicos para el tipo actual */}
-                  {!['seaWaves', 'centerPulse', 'lissajous', 'mouseInteraction'].includes(settings.currentAnimationType) && (
+                  {!['seaWaves', 'centerPulse', 'lissajous', 'mouseInteraction', 'geometricPattern'].includes(settings.currentAnimationType) && (
                     <div className="text-xs text-muted-foreground py-2">
                       No hay parámetros adicionales para este tipo de animación.
                     </div>
