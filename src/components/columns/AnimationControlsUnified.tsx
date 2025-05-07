@@ -6,7 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { useVectorStore } from '@/lib/store';
 import { isValidAnimationType } from "../vector/core/types";
 import { exportDialogState } from '@/hooks/vector/useExportDialog';
-import AnimationFavoritesPanel from './AnimationFavoritesPanel';
+import { FavoritesButton } from '../vector/FavoritesButton';
 import "@/styles/animation-controls.css";
 
 export function AnimationControlsUnified() {
@@ -340,15 +340,7 @@ export function AnimationControlsUnified() {
               </AccordionContent>
             </AccordionItem>
             
-            {/* Favoritos de Animación */}
-            <AccordionItem value="favorites">
-              <AccordionTrigger className="text-xs font-mono uppercase hover:bg-muted">
-                Favoritos
-              </AccordionTrigger>
-              <AccordionContent>
-                <AnimationFavoritesPanel />
-              </AccordionContent>
-            </AccordionItem>
+            {/* Sección eliminada: Favoritos ahora usa un modal */}
 
             {/* Acciones */}
             <AccordionItem value="actions">
@@ -366,6 +358,8 @@ export function AnimationControlsUnified() {
                     </svg>
                     Exportar Código
                   </button>
+                  
+                  <FavoritesButton />
                   
                   <button 
                     onClick={() => resetSettings()}

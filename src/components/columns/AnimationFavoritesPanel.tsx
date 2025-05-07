@@ -1,17 +1,10 @@
 import React, { useState } from 'react';
 import { useVectorStore } from '@/lib/store';
 import { AnimationFavorite } from '@/components/vector/core/types';
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  MdOutlineStar,
-  MdOutlineStarBorder,
-  MdDelete,
-  MdEdit,
-  MdAdd
-} from 'react-icons/md';
 
 /**
  * Diálogo para guardar o renombrar un favorito
@@ -125,7 +118,7 @@ const AnimationFavoritesPanel: React.FC = () => {
           onClick={() => setSaveDialogOpen(true)}
           title="Guardar configuración actual"
         >
-          <MdAdd className="h-5 w-5" />
+          <span className="text-xl font-bold">+</span>
         </Button>
       </div>
 
@@ -143,7 +136,7 @@ const AnimationFavoritesPanel: React.FC = () => {
           </div>
         </div>
       ) : (
-        <ScrollArea className="h-[280px] pr-4">
+        <div className="max-h-[280px] pr-4 overflow-y-auto">
           <div className="space-y-2">
             {sortedFavorites.map((favorite) => (
               <div 
@@ -170,7 +163,7 @@ const AnimationFavoritesPanel: React.FC = () => {
                     onClick={() => handleLoad(favorite.id)}
                     title="Cargar esta configuración"
                   >
-                    <MdOutlineStar className="h-4 w-4" />
+                    <span className="text-sm">★</span>
                   </Button>
                   <Button
                     variant="ghost"
@@ -179,7 +172,7 @@ const AnimationFavoritesPanel: React.FC = () => {
                     onClick={() => openRenameDialog(favorite)}
                     title="Renombrar favorito"
                   >
-                    <MdEdit className="h-4 w-4" />
+                    <span className="text-sm">✎</span>
                   </Button>
                   <Button
                     variant="ghost"
@@ -188,13 +181,13 @@ const AnimationFavoritesPanel: React.FC = () => {
                     onClick={() => handleDelete(favorite.id)}
                     title="Eliminar favorito"
                   >
-                    <MdDelete className="h-4 w-4" />
+                    <span className="text-sm">✕</span>
                   </Button>
                 </div>
               </div>
             ))}
           </div>
-        </ScrollArea>
+        </div>
       )}
 
       {/* Diálogo para guardar nuevo favorito */}
