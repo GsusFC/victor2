@@ -67,6 +67,7 @@ export function AnimationControlsUnified() {
                       { value: 'cellularAutomata', label: 'Autómata Celular' },
                       { value: 'flocking', label: 'Bandadas' },
                       { value: 'vortex', label: 'Vórtice' },
+                      { value: 'waterfall', label: 'Cascada' },
                       { value: 'geometricPattern', label: 'Patrón Geométrico' },
                       { value: 'followPath', label: 'Seguir Camino' },
                       { value: 'lissajous', label: 'Lissajous' }
@@ -330,8 +331,93 @@ export function AnimationControlsUnified() {
                     </>
                   )}
 
+                  {/* Parámetros específicos para animación Cascada (waterfall) */}
+                  {settings.currentAnimationType === 'waterfall' && (
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-xs text-muted-foreground">TURBULENCIA</label>
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="range" 
+                            min="0" 
+                            max="30" 
+                            step="1" 
+                            value={settings.waterfallTurbulence ?? 15}
+                            onChange={(e) => updateSetting('waterfallTurbulence', parseFloat(e.target.value))}
+                            className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
+                          />
+                          <span className="text-xs w-8 text-right">{settings.waterfallTurbulence ?? 15}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-xs text-muted-foreground">VELOCIDAD TURBULENCIA</label>
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="range" 
+                            min="0.001" 
+                            max="0.01" 
+                            step="0.001" 
+                            value={settings.waterfallTurbulenceSpeed ?? 0.003}
+                            onChange={(e) => updateSetting('waterfallTurbulenceSpeed', parseFloat(e.target.value))}
+                            className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
+                          />
+                          <span className="text-xs w-8 text-right">{(settings.waterfallTurbulenceSpeed ?? 0.003).toFixed(3)}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-xs text-muted-foreground">FACTOR DE CASCADA</label>
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="range" 
+                            min="0.05" 
+                            max="0.5" 
+                            step="0.05" 
+                            value={settings.waterfallOffsetFactor ?? 0.2}
+                            onChange={(e) => updateSetting('waterfallOffsetFactor', parseFloat(e.target.value))}
+                            className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
+                          />
+                          <span className="text-xs w-8 text-right">{(settings.waterfallOffsetFactor ?? 0.2).toFixed(2)}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-xs text-muted-foreground">ESTIRAMIENTO MÁXIMO</label>
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="range" 
+                            min="1" 
+                            max="3" 
+                            step="0.1" 
+                            value={settings.waterfallMaxStretch ?? 1.5}
+                            onChange={(e) => updateSetting('waterfallMaxStretch', parseFloat(e.target.value))}
+                            className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
+                          />
+                          <span className="text-xs w-8 text-right">{(settings.waterfallMaxStretch ?? 1.5).toFixed(1)}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-xs text-muted-foreground">FUERZA DE GRAVEDAD</label>
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="range" 
+                            min="0.1" 
+                            max="1" 
+                            step="0.1" 
+                            value={settings.waterfallGravityStrength ?? 0.5}
+                            onChange={(e) => updateSetting('waterfallGravityStrength', parseFloat(e.target.value))}
+                            className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
+                          />
+                          <span className="text-xs w-8 text-right">{(settings.waterfallGravityStrength ?? 0.5).toFixed(1)}</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  
                   {/* Si no hay parámetros específicos para el tipo actual */}
-                  {!['seaWaves', 'centerPulse', 'lissajous', 'mouseInteraction', 'geometricPattern'].includes(settings.currentAnimationType) && (
+                  {!['seaWaves', 'centerPulse', 'lissajous', 'mouseInteraction', 'geometricPattern', 'waterfall'].includes(settings.currentAnimationType) && (
                     <div className="text-xs text-muted-foreground py-2">
                       No hay parámetros adicionales para este tipo de animación.
                     </div>
