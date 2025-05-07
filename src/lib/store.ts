@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { produce } from 'immer'; // Importar produce
+import { v4 as uuidv4 } from 'uuid'; // Importar UUID para generar IDs únicos
 import type { 
   VectorSettings, 
   BaseVectorSettings, 
@@ -10,7 +11,8 @@ import type {
   AspectRatio,
   RotationOrigin,
   PinwheelCenter,
-  OceanEddy
+  OceanEddy,
+  AnimationFavorite
 } from '@/components/vector/core/types';
 import type { ExtendedVectorItem } from '@/components/vector/core/vectorTypes';
 
@@ -154,6 +156,8 @@ export interface VectorStoreState {
   pinwheelCenters: PinwheelCenter[];
   lastPulseTime: number;
   oceanEddies: OceanEddy[];
+  // Colección de favoritos de animación
+  animationFavorites: AnimationFavorite[];
 }
 
 // Interfaz para las acciones separada para claridad
@@ -180,6 +184,12 @@ export interface VectorStoreActions {
   setIsLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
   resetStore: () => void;
+  
+  // Acciones para gestión de favoritos de animación
+  saveAnimationFavorite: (name: string) => void;
+  loadAnimationFavorite: (id: string) => void;
+  deleteAnimationFavorite: (id: string) => void;
+  renameAnimationFavorite: (id: string, newName: string) => void;
 }
 
 // Estado inicial completo
@@ -194,6 +204,7 @@ const initialState: VectorStoreState = {
   pinwheelCenters: [],
   lastPulseTime: 0,
   oceanEddies: [], 
+  animationFavorites: [],
 };
 
 // --- STORE --- //
@@ -260,13 +271,77 @@ const createVectorStore = () => create<VectorStore>()(persist(
         set(produce((draft: VectorStoreState) => {
           draft.settings.dynamicLengthIntensity = intensity;
         })),
+
+      // Implementación de acciones para gestionar favoritos de animación
+      saveAnimationFavorite: (name: string) => 
+        set(produce((state: VectorStoreState) => {
+          // Extraer solo las propiedades de animación relevantes
+          const relevantSettings: Partial<VectorSettings> = {
+            animationType: state.settings.animationType,
+            vectorShape: state.settings.vectorShape,
+            vectorStrokeWidth: state.settings.vectorStrokeWidth,
+            vectorColor: state.settings.vectorColor,
+            backgroundColor: state.settings.backgroundColor,
+            dynamicLengthEnabled: state.settings.dynamicLengthEnabled,
+            dynamicLengthIntensity: state.settings.dynamicLengthIntensity,
+            seaWaveFrequency: state.settings.seaWaveFrequency,
+            seaWaveAmplitude: state.settings.seaWaveAmplitude,
+            perlinNoiseScale: state.settings.perlinNoiseScale,
+            perlinNoiseSpeed: state.settings.perlinNoiseSpeed,
+            mouseAttractionRadius: state.settings.mouseAttractionRadius,
+            mouseAttractionStrength: state.settings.mouseAttractionStrength,
+            pulseDuration: state.settings.pulseDuration,
+            geometricPatternSize: state.settings.geometricPatternSize,
+            geometricPatternComplexity: state.settings.geometricPatternComplexity,
+            geometricPatternRotationSpeed: state.settings.geometricPatternRotationSpeed,
+            animationSpeed: state.settings.animationSpeed,
+            rotationOrigin: state.settings.rotationOrigin,
+          };
+          
+          // Crear un nuevo favorito
+          const newFavorite: AnimationFavorite = {
+            id: uuidv4(),
+            name: name,
+            timestamp: Date.now(),
+            settings: relevantSettings
+          };
+          
+          // Añadir a la colección de favoritos
+          state.animationFavorites.push(newFavorite);
+        })),
+        
+      loadAnimationFavorite: (id: string) =>
+        set(produce((state: VectorStoreState) => {
+          const favorite = state.animationFavorites.find(fav => fav.id === id);
+          if (favorite) {
+            // Aplicar la configuración guardada al estado actual
+            Object.assign(state.settings, favorite.settings);
+          }
+        })),
+        
+      deleteAnimationFavorite: (id: string) =>
+        set(produce((state: VectorStoreState) => {
+          state.animationFavorites = state.animationFavorites.filter(fav => fav.id !== id);
+        })),
+        
+      renameAnimationFavorite: (id: string, newName: string) =>
+        set(produce((state: VectorStoreState) => {
+          const favorite = state.animationFavorites.find(fav => fav.id === id);
+          if (favorite) {
+            favorite.name = newName;
+            favorite.timestamp = Date.now(); // Actualizar timestamp
+          }
+        })),
+
       togglePause: () => set(produce((draft: VectorStoreState) => {
         draft.settings.isPaused = !draft.settings.isPaused;
       })),
+
       setAnimationType: (type: AnimationType) => set(produce((draft: VectorStoreState) => {
         draft.settings.animationType = type;
         draft.settings.currentAnimationType = type; // Actualizar ambas propiedades
       })),
+      
       setVectorShape: (shape: VectorShape) => set(produce((draft: VectorStoreState) => {
         draft.settings.vectorShape = shape;
       })),
@@ -282,7 +357,8 @@ const createVectorStore = () => create<VectorStore>()(persist(
       updateSetting: <K extends keyof VectorSettings>(key: K, value: VectorSettings[K]) => 
         set(produce((draft: VectorStoreState) => {
           if (key in draft.settings) {
-            (draft.settings as any)[key] = value;
+            // Usamos una asignación tipada correcta en lugar de 'any'
+            draft.settings[key] = value;
           } else {
             console.warn(`Attempted to update non-setting key: ${key}`);
           }
@@ -327,7 +403,8 @@ const createVectorStore = () => create<VectorStore>()(persist(
     },
     partialize: (state) => (
       {
-        settings: state.settings // Solo persistir settings
+        settings: state.settings, // Persistir configuración
+        animationFavorites: state.animationFavorites // Persistir favoritos de animación
         // No persistir: svgLines, vectorGridMap, animationFrameId, etc.
       }
     )

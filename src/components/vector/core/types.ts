@@ -67,6 +67,16 @@ export function isValidAnimationType(value: string): value is AnimationType {
   return VALID_ANIMATION_TYPES.includes(value as ValidAnimationType);
 }
 
+/**
+ * Estructura para almacenar un favorito de animación
+ */
+export interface AnimationFavorite {
+  id: string;          // UUID para identificar cada favorito
+  name: string;        // Nombre descriptivo asignado por el usuario
+  timestamp: number;   // Fecha de creación/modificación
+  settings: Partial<VectorSettings>; // Solo las propiedades relevantes para animación
+}
+
 // Helper para validar VectorShape
 export const isValidVectorShape = (shape: unknown): shape is VectorShape => {
   return ['line', 'arrow', 'dot', 'triangle', 'semicircle', 'curve'].includes(shape as string);
