@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { ThreeColumnLayout } from '@/components/layout/ThreeColumnLayout';
 import { AnimationControlsUnified } from '@/components/columns/AnimationControlsUnified';
 import { VectorPropertiesUnified } from '@/components/columns/VectorPropertiesUnified';
-import { ExportDialog } from '@/components/vector/ExportDialog';
+import ExportDialog from '@/components/vector/ExportDialog';
 import NewVectorCanvas from '@/components/vector/NewVectorCanvas';
 import { exportDialogState } from '@/hooks/vector/useExportDialog';
 
