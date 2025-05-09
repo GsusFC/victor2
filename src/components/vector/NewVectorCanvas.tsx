@@ -7,6 +7,7 @@ import type { VectorSettings } from '@/components/vector/core/types';
 import type { ExtendedVectorItem } from '@/components/vector/core/vectorTypes';
 import { AspectRatioControl } from './ui/AspectRatioControl';
 import { useContainerDimensions } from '@/hooks/vector/useContainerDimensions';
+import { useVectorAnimation } from '../../hooks/vector/useVectorAnimation';
 
 /**
  * Componente de canvas de vectores optimizado que evita problemas de renderizado infinito.
@@ -28,6 +29,9 @@ const NewVectorCanvas: React.FC = () => {
   const { setSvgLines, setCalculatedValues, setLastPulseTime } = useVectorStore(
     (state) => state.actions
   );
+  
+  // Acceder a togglePause desde actions
+  const togglePause = useVectorStore((state) => state.actions.togglePause);
   
   // Estado local (independiente de Zustand)
   const [vectorItems, setVectorItems] = useState<ExtendedVectorItem[]>([]);
@@ -178,26 +182,47 @@ const NewVectorCanvas: React.FC = () => {
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
           // Calcular posición usando el espaciado base y los offsets para centrado
-          const baseX = offsetX + x * baseSpacing;
-          const baseY = offsetY + y * baseSpacing;
+          const currentBaseX = offsetX + x * baseSpacing + baseSpacing / 2; // Centrar vector en su celda
+          const currentBaseY = offsetY + y * baseSpacing + baseSpacing / 2;
           
-          newVectors.push({
+          const initialAngle = settingsRef.current.vectorShape === 'dot' ? 0 : Math.random() * 360;
+
+          const radAngle = initialAngle * (Math.PI / 180);
+          const currentVectorLength = settingsRef.current.vectorLength;
+          const calculatedX2 = currentBaseX + currentVectorLength * Math.cos(radAngle);
+          const calculatedY2 = currentBaseY + currentVectorLength * Math.sin(radAngle);
+
+          const vectorItem: ExtendedVectorItem = {
             id: `vector-${x}-${y}`,
-            baseX: baseX + baseSpacing / 2, // Centrar vector en su celda
-            baseY: baseY + baseSpacing / 2,
-            currentAngle: 0,
-            previousAngle: 0,
-            lengthFactor: 1.0,
-            layer: 0,
-            activationTime: 0,
+            // Propiedades base de VectorItem (types.ts)
+            baseX: currentBaseX, // Corresponde a la posición central de la celda
+            baseY: currentBaseY,
+            currentAngle: initialAngle, // Ángulo para lógica interna si es diferente del 'angle' de renderizado
             r: y,                // Fila
             c: x,                // Columna
-            flockId: 0,          // ID de grupo para animaciones de bandada
-            shape: settingsRef.current.vectorShape  // Forma visual del vector
-          });
+            flockId: Math.floor((y * cols + x) / (settingsRef.current.vectorsPerFlock || 10)),
+            shape: settingsRef.current.vectorShape, 
+            angle: initialAngle,      // Ángulo actual en grados para renderizado
+            x1: currentBaseX,         // Coordenada x del punto de inicio (el centro de la celda)
+            y1: currentBaseY,         // Coordenada y del punto de inicio
+            x2: calculatedX2,        // Coordenada x del punto final calculada
+            y2: calculatedY2,        // Coordenada y del punto final calculada
+            color: settingsRef.current.vectorColor,
+            strokeWidth: settingsRef.current.vectorWidth,
+            strokeLinecap: settingsRef.current.strokeLinecap,
+
+            // Propiedades de ExtendedVectorItem (de vectorTypes.ts)
+            previousAngle: initialAngle,
+            targetAngle: initialAngle, // Puede ser igual al inicial o calcularse si es necesario
+            layer: y, // Ejemplo: usar fila como capa
+            activationTime: Date.now(),
+            lengthFactor: 1.0,
+            widthFactor: 1.0, // Añadir si falta, aunque no está en la definición de vectorTypes.ts explícitamente
+          };
+          newVectors.push(vectorItem);
         }
       }
-      
+
       // Actualizar estado local
       setVectorItems(newVectors);
       
@@ -241,14 +266,42 @@ const NewVectorCanvas: React.FC = () => {
     }
   }, []);
   
+  // Manejar eventos de tecla para controlar la animación
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Pausar/reanudar con barra espaciadora
+    if (e.code === 'Space' && !e.repeat) {
+      // Solo si no se está escribiendo en inputs (ignora cuando el foco está en elementos de texto)
+      const activeElement = document.activeElement;
+      const isTextField = activeElement && 
+        (activeElement.tagName === 'INPUT' || 
+         activeElement.tagName === 'TEXTAREA' || 
+         (activeElement as HTMLElement).isContentEditable);
+      
+      if (!isTextField) {
+        e.preventDefault(); // Evitar scroll u otros comportamientos por defecto
+        // Pausar/reanudar la animación
+        togglePause();
+        console.log(`[KeyboardControl] ${settingsRef.current.isPaused ? 'Pausado' : 'Reanudado'} con barra espaciadora`);
+      }
+    }
+  }, [togglePause]);
+
   // Efecto para añadir/quitar event listener
   useEffect(() => {    
     document.addEventListener('mousemove', handleMouseMove);
-    return () => document.removeEventListener('mousemove', handleMouseMove);
-  }, [handleMouseMove]); // Dependencia de la función memoizada
+    document.addEventListener('keydown', handleKeyDown); // Agregar listener de teclado
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('keydown', handleKeyDown); // Quitar listener al desmontar
+    };
+  }, [handleMouseMove, handleKeyDown]); // Dependencia de la función memoizada
   
   // Variable para controlar la frecuencia de actualización del estado global
   const lastUpdateTimeRef = useRef<number>(0);
+
+  // Obtener calculateTargetAngle del hook, pasándole settingsRef.current directamente
+  const { calculateTargetAngle: calculateTargetAngleFromHook } = useVectorAnimation(settingsRef.current);
 
   // Efecto para gestionar la animación con optimizaciones de rendimiento
   useEffect(() => {
@@ -357,7 +410,7 @@ const NewVectorCanvas: React.FC = () => {
               setLastPulseTime(timestamp);
             }
             
-            // Calculamos el centro del canvas
+            // Calcular el centro del canvas
             const center = new Victor(dimensions.width / 2, dimensions.height / 2);
             const vectorPos = new Victor(item.baseX, item.baseY);
             const direction = vectorPos.clone().subtract(center);
@@ -482,32 +535,6 @@ const NewVectorCanvas: React.FC = () => {
             break;
           }
           
-          case 'geometrico': {
-            // Versión simplificada del patrón geométrico - usamos la misma base pero solo con los controles básicos
-            const centerX = dimensions.width / 2;
-            const centerY = dimensions.height / 2;
-            
-            // Solo si tenemos dimensiones válidas
-            if (centerX > 0 && centerY > 0) {
-              // Convertir a ángulo polar - calculamos directamente el ángulo sin calcular el radio
-              const theta = Math.atan2(item.baseY - centerY, item.baseX - centerX);
-              
-              // Añadir 90 grados (π/2) para hacerlo tangencial
-              const baseAngle = theta + Math.PI/2;
-              
-              // Aplicar rotación basada en el tiempo usando el factor de velocidad
-              const speedFactor = settingsRef.current.animationSpeedFactor || 1;
-              const timeComponent = timestamp * 0.001 * 0.3 * speedFactor;
-              
-              // Calcular ángulo final
-              targetAngle = (baseAngle + timeComponent) * (180 / Math.PI);
-            } else {
-              // Si no tenemos dimensiones, mantener el ángulo actual
-              targetAngle = item.currentAngle || 0;
-            }
-            break;
-          }
-          
           case 'tangenteClasica': {
             // Implementación exacta del algoritmo original del HTML
             const centerX = dimensions.width / 2;
@@ -534,14 +561,75 @@ const NewVectorCanvas: React.FC = () => {
             break;
           }
           
+          case 'waterfall': {
+            // Recuperar los parámetros de configuración para waterfall
+            const { 
+              waterfallTurbulence = 15, 
+              waterfallTurbulenceSpeed = 0.003, 
+              waterfallOffsetFactor = 0.2,
+              waterfallGravityCycle = 2000,
+              waterfallGravityStrength = 0.5,
+              waterfallMaxStretch = 1.5,
+              waterfallDriftStrength = 0.2
+            } = settingsRef.current;
+            
+            // Ángulo base: 90 grados - caída vertical hacia abajo
+            const baseAngle = 90;
+            
+            // Aplicar turbulencia sinusoidal horizontal
+            // - Usamos la posición X como desfase para crear un efecto ondulatorio
+            // - Utilizamos la posición Y para crear desfase en la cascada (más rápido abajo)
+            const horizontalOffset = Math.sin(
+              timestamp * waterfallTurbulenceSpeed + 
+              item.baseX * 0.05 + 
+              item.baseY * waterfallOffsetFactor
+            ) * waterfallTurbulence;
+            
+            // Efecto de gravedad pulsante - crea un efecto de aceleración periódica
+            // Esto afecta el factor de longitud para que los vectores se estiren más o menos
+            const gravityCycle = (timestamp % waterfallGravityCycle) / waterfallGravityCycle;
+            const gravityEffect = Math.sin(gravityCycle * Math.PI) * waterfallGravityStrength;
+            
+            // Deriva lateral basada en la posición - sutil efecto de corrientes laterales
+            const driftOffset = Math.sin(item.baseX * 0.01) * waterfallDriftStrength * 20;
+            
+            // Calcular ángulo final
+            targetAngle = baseAngle + horizontalOffset + driftOffset;
+            
+            // Modificar el factor de longitud para simular estiramiento por gravedad
+            // Solo modificamos la longitud si el ángulo está cerca de la vertical (90° ±30°)
+            const angleDeviation = Math.abs((targetAngle % 360) - 90);
+            if (angleDeviation < 30) {
+              // Normalizar la desviación a un valor entre 0 y 1 (0 = perfectamente vertical)
+              const normalizedDeviation = 1 - (angleDeviation / 30);
+              
+              // Calcular factor de estiramiento basado en gravedad y ciclo
+              // - Mayor gravedad = mayor estiramiento
+              // - Mayor cercanía a vertical = mayor estiramiento
+              const stretchFactor = 1 + (gravityEffect * normalizedDeviation * waterfallMaxStretch);
+              
+              // Aplicar el factor de longitud al vector
+              // Esto se usará en el renderizado para estirar el vector
+              item.lengthFactor = stretchFactor;
+            } else {
+              // Para vectores que no están cerca de la vertical, usar longitud normal
+              item.lengthFactor = 1.0;
+            }
+            
+            break;
+          }
+          
+          case 'lissajous': { 
+            targetAngle = calculateTargetAngleFromHook(item, mousePosition, dimensions, timestamp);
+            break;
+          }
+
           // Otras animaciones se pueden añadir aquí
           default:
-            // Si no se especifica un tipo de animación, usar mouseInteraction
-            if (mousePosition) {
-              const vectorPos = new Victor(item.baseX, item.baseY);
-              const direction = mousePosition.clone().subtract(vectorPos);
-              targetAngle = direction.angle() * (180 / Math.PI);
-            }
+            // Si animationType no es reconocido, mantener el ángulo actual.
+            // targetAngle ya está inicializado con item.currentAngle.
+            console.warn(`[animate] Tipo de animación no reconocido: '${animationType}'. Los vectores mantendrán su ángulo actual o la última animación válida.`);
+            // No es necesario hacer nada más aquí, ya que targetAngle no se modificará
             break;
         }
         
@@ -557,11 +645,26 @@ const NewVectorCanvas: React.FC = () => {
         // Aplicar easing
         item.currentAngle = (item.currentAngle + angleDiff * easingFactor) % 360;
         
-        // Calcular longitud dinámica basada en velocidad angular
+        // Calcular grosor dinámico basado en velocidad angular con efecto amplificado
         if (dynamicLengthEnabled && item.previousAngle !== undefined) {
+          // Calcular velocidad angular con valor absoluto
           const angularVelocity = Math.abs(item.currentAngle - item.previousAngle);
-          item.lengthFactor = 1.0 + (angularVelocity * dynamicLengthIntensity / 10);
+          
+          // Definir un valor mínimo para garantizar que siempre haya algo de efecto visible
+          const minEffect = 0.05; 
+          
+          // Calcular el factor objetivo con amplificación (dividir por 2 en vez de 10)
+          const targetWidthFactor = 1.0 + Math.max(minEffect, angularVelocity * dynamicLengthIntensity / 2);
+          
+          // Aplicar suavizado para que los cambios no sean instantáneos
+          const prevWidthFactor = item.widthFactor || 1.0;
+          item.widthFactor = prevWidthFactor + (targetWidthFactor - prevWidthFactor) * 0.3; // Transición suave
+          
+          // Mantener longitud constante
+          item.lengthFactor = 1.0;
         } else {
+          // Reiniciar ambos factores cuando la funcionalidad está desactivada
+          item.widthFactor = 1.0;
           item.lengthFactor = 1.0;
         }
       });
@@ -594,11 +697,18 @@ const NewVectorCanvas: React.FC = () => {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [vectorItems, setSvgLines, dimensions.width, dimensions.height, setLastPulseTime]);
+  }, [vectorItems, setSvgLines, dimensions, setLastPulseTime, settingsRef, calculateTargetAngleFromHook]);
   
   // Renderizado
   return (
-    <div className={containerClasses} ref={containerRef}>
+    <div 
+      className={containerClasses} 
+      ref={containerRef}
+      style={{ 
+        backgroundColor: settingsRef.current.backgroundColor || '#000000',
+        transition: 'background-color 0.3s ease'
+      }}
+    >
       <svg 
         ref={svgRef}
         viewBox={`-50 -50 ${(dimensions.width || 1067) + 100} ${(dimensions.height || 600) + 100}`}
@@ -611,7 +721,7 @@ const NewVectorCanvas: React.FC = () => {
           y="0" 
           width={dimensions.width || 1067} 
           height={dimensions.height || 600} 
-          fill="#000000"
+          fill={settingsRef.current.backgroundColor || '#000000'}
           data-component-name="NewVectorCanvas"
         />
         <defs>
@@ -621,7 +731,7 @@ const NewVectorCanvas: React.FC = () => {
         </defs>
         <g>
           {vectorItems.map(item => {
-            const { currentAngle, baseX, baseY, lengthFactor = 1.0 } = item;
+            const { currentAngle, baseX, baseY, lengthFactor = 1.0, widthFactor = 1.0 } = item;
             
             // Calcular extremos del vector basados en el ángulo
             // No necesitamos calcular ángulos en radianes ya que todas las rotaciones ahora se aplican via SVG
@@ -659,7 +769,7 @@ const NewVectorCanvas: React.FC = () => {
                       x2={actualLength - 5} 
                       y2={0} 
                       stroke={settingsRef.current.vectorColor}
-                      strokeWidth={settingsRef.current.vectorWidth}
+                      strokeWidth={settingsRef.current.vectorWidth * widthFactor}
                       strokeLinecap={settingsRef.current.vectorLineCap}
                     />
                     <polygon 
@@ -676,7 +786,7 @@ const NewVectorCanvas: React.FC = () => {
                     <circle
                       cx={actualLength/2}
                       cy={0}
-                      r={settingsRef.current.vectorWidth * 2}
+                      r={settingsRef.current.vectorWidth * 2 * widthFactor}
                       fill={settingsRef.current.vectorColor}
                     />
                   </g>
@@ -716,7 +826,7 @@ const NewVectorCanvas: React.FC = () => {
                       d={semicirclePath}
                       fill="none"
                       stroke={settingsRef.current.vectorColor}
-                      strokeWidth={settingsRef.current.vectorWidth}
+                      strokeWidth={settingsRef.current.vectorWidth * widthFactor}
                       strokeLinecap={settingsRef.current.vectorLineCap}
                     />
                   </g>
@@ -739,7 +849,7 @@ const NewVectorCanvas: React.FC = () => {
                       d={curvePath}
                       fill="none"
                       stroke={settingsRef.current.vectorColor}
-                      strokeWidth={settingsRef.current.vectorWidth}
+                      strokeWidth={settingsRef.current.vectorWidth * widthFactor}
                       strokeLinecap={settingsRef.current.vectorLineCap}
                     />
                   </g>
@@ -755,7 +865,7 @@ const NewVectorCanvas: React.FC = () => {
                       x2={actualLength} // Siempre horizontal, la rotación lo gira
                       y2={0}
                       stroke={settingsRef.current.vectorColor}
-                      strokeWidth={settingsRef.current.vectorWidth}
+                      strokeWidth={settingsRef.current.vectorWidth * widthFactor}
                       strokeLinecap={settingsRef.current.vectorLineCap}
                     />
                   </g>
