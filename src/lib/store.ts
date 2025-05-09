@@ -74,6 +74,7 @@ export const defaultBaseSettings: BaseVectorSettings = {
   vectorShape: 'semicircle' as VectorShape,
   strokeLinecap: 'round' as LineCap,
   animationSpeed: 1,
+  rotationSpeed: 1, // <<< VALOR POR DEFECTO AÑADIDO
   backgroundColor: '#000000',
   mouseAttraction: false,
   aspectRatio: '16:9' as AspectRatio,
@@ -90,6 +91,7 @@ export const defaultBaseSettings: BaseVectorSettings = {
   rotationOrigin: 'start' as RotationOrigin, // Nuevo valor por defecto
   dynamicLengthEnabled: false,
   dynamicLengthIntensity: 0.7, // Aumentado para mayor efecto visual
+  vectorsPerFlock: 10, // AÑADIDO AQUÍ
 };
 
 // Configuración completa por defecto - SOLO SETTINGS
@@ -103,6 +105,7 @@ export const defaultSettings: VectorSettings = {
   vectorShape: 'line',
   strokeLinecap: 'round', 
   animationSpeed: 1, 
+  rotationSpeed: 1, // <<< VALOR POR DEFECTO AÑADIDO (asegurar que esté aquí también si Base no es suficiente)
   backgroundColor: '#000000', 
   mouseAttraction: true, 
   aspectRatio: '16:9',
@@ -119,6 +122,7 @@ export const defaultSettings: VectorSettings = {
   rotationOrigin: 'start',
   dynamicLengthEnabled: false,
   dynamicLengthIntensity: 0.7, // Aumentado para mayor efecto visual
+  vectorsPerFlock: 10, // AÑADIDO AQUÍ
   
   // --- Propiedades de AnimationVectorSettings (excluyendo las ya en Base) --- 
   animationType: 'smoothWaves',
@@ -136,9 +140,7 @@ export const defaultSettings: VectorSettings = {
   vortexStrength: 1,
   vortexCenterX: 50, 
   vortexCenterY: 50, 
-  followPathComplexity: 5, 
-  followPathSpeed: 1, 
-  followPathVariation: 0.1, 
+  
   lissajousParamA: 1, 
   lissajousParamB: 2, 
   lissajousFrequency: 0.01, 
@@ -164,11 +166,10 @@ export interface VectorStoreState {
   animationFrameId: number | null;
   isLoading: boolean;
   error: string | null;
-  // Agrupar valores calculados
-  calculatedValues: {
-    gridCols: number;
-    logicalWidth: number;
-    logicalHeight: number;
+  calculatedValues: { // MODIFICADO AQUÍ
+    cols: number; 
+    svgWidth: number;
+    svgHeight: number;
   };
   settings: VectorSettings;
   pinwheelCenters: PinwheelCenter[];
@@ -183,7 +184,7 @@ export interface VectorStoreActions {
   setInitialSettings: (settings: Partial<VectorSettings>) => void;
   resetSettings: () => void;
   setSvgLines: (lines: ExtendedVectorItem[]) => void;
-  setCalculatedValues: (gridCols: number, logicalWidth: number, logicalHeight: number) => void;
+  setCalculatedValues: (cols: number, svgWidth: number, svgHeight: number) => void; // MODIFICADA FIRMA
   setVectorGridMap: (map: Map<string, number>) => void;
   updateSetting: <K extends keyof VectorSettings>(key: K, value: VectorSettings[K]) => void;
   togglePause: () => void;
@@ -217,7 +218,7 @@ const initialState: VectorStoreState = {
   animationFrameId: null,
   isLoading: false,
   error: null,
-  calculatedValues: { gridCols: 0, logicalWidth: 0, logicalHeight: 0 },
+  calculatedValues: { cols: 0, svgWidth: 0, svgHeight: 0 }, // MODIFICADO AQUÍ
   settings: { ...defaultSettings },
   pinwheelCenters: [],
   lastPulseTime: 0,
@@ -257,10 +258,11 @@ const createVectorStore = () => create<VectorStore>()(persist(
         set(() => ({ error })), 
       
       // Corregir setCalculatedValues para usar el objeto anidado
-      setCalculatedValues: (gridCols: number, logicalWidth: number, logicalHeight: number) =>
-        set(() => ({ 
-          calculatedValues: { gridCols, logicalWidth, logicalHeight }
-        })), 
+      setCalculatedValues: (cols: number, svgWidth: number, svgHeight: number) => // MODIFICADA FIRMA
+        set(produce((draft: VectorStoreState) => {
+          // draft.calculatedValues = { gridCols, logicalWidth, logicalHeight };
+          draft.calculatedValues = { cols, svgWidth, svgHeight }; // MODIFICADA ASIGNACIÓN
+        })),
       resetSettings: () =>
         set(() => ({ settings: { ...defaultSettings } })), // Usar copia
       resetStore: () =>

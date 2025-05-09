@@ -66,10 +66,8 @@ export function AnimationControlsUnified() {
                       { value: 'expandingWave', label: 'Onda Expansiva' },
                       { value: 'cellularAutomata', label: 'Autómata Celular' },
                       { value: 'flocking', label: 'Bandadas' },
-                      { value: 'vortex', label: 'Vórtice' },
                       { value: 'waterfall', label: 'Cascada' },
                       { value: 'geometricPattern', label: 'Patrón Geométrico' },
-                      { value: 'followPath', label: 'Seguir Camino' },
                       { value: 'lissajous', label: 'Lissajous' }
                     ].map(type => (
                       <option key={type.value} value={type.value}>{type.label}</option>
@@ -203,11 +201,11 @@ export function AnimationControlsUnified() {
                             min="1" 
                             max="10" 
                             step="1" 
-                            value={settings.lissajousParamA}
+                            value={settings.lissajousParamA ?? 1}
                             onChange={(e) => updateSetting('lissajousParamA', parseInt(e.target.value))}
                             className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
                           />
-                          <span className="text-xs w-8 text-right">{settings.lissajousParamA}</span>
+                          <span className="text-xs w-8 text-right">{settings.lissajousParamA ?? 1}</span>
                         </div>
                       </div>
                       <div className="space-y-2">
@@ -218,11 +216,11 @@ export function AnimationControlsUnified() {
                             min="1" 
                             max="10" 
                             step="1" 
-                            value={settings.lissajousParamB}
+                            value={settings.lissajousParamB ?? 1}
                             onChange={(e) => updateSetting('lissajousParamB', parseInt(e.target.value))}
                             className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
                           />
-                          <span className="text-xs w-8 text-right">{settings.lissajousParamB}</span>
+                          <span className="text-xs w-8 text-right">{settings.lissajousParamB ?? 1}</span>
                         </div>
                       </div>
                       <div className="space-y-2">
@@ -230,33 +228,29 @@ export function AnimationControlsUnified() {
                         <div className="flex items-center gap-2">
                           <input 
                             type="range" 
-                            min="0.0001" 
-                            max="0.005" 
-                            step="0.0001" 
-                            value={settings.lissajousFrequency}
+                            min="0.001" 
+                            max="0.01" 
+                            step="0.001" 
+                            value={settings.lissajousFrequency ?? 0.01}
                             onChange={(e) => updateSetting('lissajousFrequency', parseFloat(e.target.value))}
                             className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
                           />
-                          <span className="text-xs w-14 text-right">{settings.lissajousFrequency.toFixed(4)}</span>
+                          <span className="text-xs w-8 text-right">{(settings.lissajousFrequency ?? 0.01).toFixed(3)}</span>
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs text-muted-foreground">DIFERENCIA DE FASE (GRADOS)</label>
+                        <label className="text-xs text-muted-foreground">DELTA (FASE)</label>
                         <div className="flex items-center gap-2">
-                          <input 
-                            type="range" 
-                            min="0" 
-                            max="360" 
-                            step="5" 
-                            value={Math.round((settings.lissajousDelta * 180 / Math.PI))}
-                            onChange={(e) => {
-                              const degrees = parseInt(e.target.value);
-                              const radians = degrees * Math.PI / 180;
-                              updateSetting('lissajousDelta', radians);
-                            }}
-                            className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
+                          <input
+                            type="range"
+                            min="0"
+                            max="6.28318" // 2 * PI
+                            step="0.01"
+                            value={settings.lissajousDelta ?? Math.PI / 2}
+                            onChange={(e) => updateSetting('lissajousDelta', parseFloat(e.target.value))}
+                            className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input"
                           />
-                          <span className="text-xs w-8 text-right">{Math.round((settings.lissajousDelta * 180 / Math.PI))}°</span>
+                          <span className="text-xs w-8 text-right">{(settings.lissajousDelta ?? Math.PI / 2).toFixed(2)}</span>
                         </div>
                       </div>
                     </>
@@ -318,14 +312,14 @@ export function AnimationControlsUnified() {
                         <div className="flex items-center gap-2">
                           <input 
                             type="range" 
-                            min="0.1" 
-                            max="3" 
-                            step="0.1" 
-                            value={settings.geometricPatternRotationSpeed || 0.5}
+                            min="0.001" 
+                            max="0.1" 
+                            step="0.001" 
+                            value={settings.geometricPatternRotationSpeed ?? 0.01} 
                             onChange={(e) => updateSetting('geometricPatternRotationSpeed', parseFloat(e.target.value))}
                             className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
                           />
-                          <span className="text-xs w-8 text-right">{(settings.geometricPatternRotationSpeed || 0.5).toFixed(1)}</span>
+                          <span className="text-xs w-8 text-right">{(settings.geometricPatternRotationSpeed ?? 0.01).toFixed(3)}</span>
                         </div>
                       </div>
                     </>
@@ -351,13 +345,13 @@ export function AnimationControlsUnified() {
                       </div>
                       
                       <div className="space-y-2">
-                        <label className="text-xs text-muted-foreground">VELOCIDAD TURBULENCIA</label>
+                        <label className="text-xs text-muted-foreground">VELOCIDAD DE TURBULENCIA</label>
                         <div className="flex items-center gap-2">
                           <input 
                             type="range" 
-                            min="0.001" 
+                            min="0.0001" 
                             max="0.01" 
-                            step="0.001" 
+                            step="0.0001" 
                             value={settings.waterfallTurbulenceSpeed ?? 0.003}
                             onChange={(e) => updateSetting('waterfallTurbulenceSpeed', parseFloat(e.target.value))}
                             className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
@@ -367,12 +361,12 @@ export function AnimationControlsUnified() {
                       </div>
                       
                       <div className="space-y-2">
-                        <label className="text-xs text-muted-foreground">FACTOR DE CASCADA</label>
+                        <label className="text-xs text-muted-foreground">FACTOR DE DESFASE</label>
                         <div className="flex items-center gap-2">
                           <input 
                             type="range" 
-                            min="0.05" 
-                            max="0.5" 
+                            min="0" 
+                            max="1" 
                             step="0.05" 
                             value={settings.waterfallOffsetFactor ?? 0.2}
                             onChange={(e) => updateSetting('waterfallOffsetFactor', parseFloat(e.target.value))}
@@ -381,23 +375,7 @@ export function AnimationControlsUnified() {
                           <span className="text-xs w-8 text-right">{(settings.waterfallOffsetFactor ?? 0.2).toFixed(2)}</span>
                         </div>
                       </div>
-                      
-                      <div className="space-y-2">
-                        <label className="text-xs text-muted-foreground">ESTIRAMIENTO MÁXIMO</label>
-                        <div className="flex items-center gap-2">
-                          <input 
-                            type="range" 
-                            min="1" 
-                            max="3" 
-                            step="0.1" 
-                            value={settings.waterfallMaxStretch ?? 1.5}
-                            onChange={(e) => updateSetting('waterfallMaxStretch', parseFloat(e.target.value))}
-                            className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
-                          />
-                          <span className="text-xs w-8 text-right">{(settings.waterfallMaxStretch ?? 1.5).toFixed(1)}</span>
-                        </div>
-                      </div>
-                      
+
                       <div className="space-y-2">
                         <label className="text-xs text-muted-foreground">FUERZA DE GRAVEDAD</label>
                         <div className="flex items-center gap-2">
@@ -413,6 +391,38 @@ export function AnimationControlsUnified() {
                           <span className="text-xs w-8 text-right">{(settings.waterfallGravityStrength ?? 0.5).toFixed(1)}</span>
                         </div>
                       </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs text-muted-foreground">ESTIRAMIENTO MÁXIMO</label>
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="range" 
+                            min="0.5" 
+                            max="5" 
+                            step="0.1" 
+                            value={settings.waterfallMaxStretch ?? 1.5}
+                            onChange={(e) => updateSetting('waterfallMaxStretch', parseFloat(e.target.value))}
+                            className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
+                          />
+                          <span className="text-xs w-8 text-right">{(settings.waterfallMaxStretch ?? 1.5).toFixed(1)}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-xs text-muted-foreground">FUERZA DE DERIVA</label>
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="range" 
+                            min="0" 
+                            max="1" 
+                            step="0.05" 
+                            value={settings.waterfallDriftStrength ?? 0.2}
+                            onChange={(e) => updateSetting('waterfallDriftStrength', parseFloat(e.target.value))}
+                            className="w-full h-1.5 bg-muted rounded-none appearance-none cursor-pointer [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-input [&::-moz-range-thumb]:bg-foreground [&::-moz-range-thumb]:border-input" 
+                          />
+                          <span className="text-xs w-8 text-right">{(settings.waterfallDriftStrength ?? 0.2).toFixed(2)}</span>
+                        </div>
+                      </div>
                     </>
                   )}
                   
@@ -426,8 +436,6 @@ export function AnimationControlsUnified() {
               </AccordionContent>
             </AccordionItem>
             
-            {/* Sección eliminada: Favoritos ahora usa un modal */}
-
             {/* Acciones */}
             <AccordionItem value="actions">
               <AccordionTrigger className="text-xs font-mono uppercase hover:bg-muted">
